@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <title>Generiranje narudžbenice</title>
+  <link href="./src/bootstrap.css" rel="stylesheet">
+  <link href="./src/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <main class="container my-4 p-4 bg-white rounded shadow-sm">
+    <h1 class="mb-4">Generiranje narudžbenice</h1>
+
+    <!-- Buyer -->
+    <div class="mb-3">
+      <label for="buyer-oib" class="form-label">Kupac</label>
+      <div class="input-group mb-2">
+        <input type="text" class="form-control" id="buyer-oib" placeholder="Unesite OIB kupca">
+        <button class="btn btn-outline-info" type="button" id="fetch-buyer">
+          📥
+        </button>
+      </div>
+      <input type="text" class="form-control" id="buyer-name" placeholder="Unesite naziv kupca">
+    </div>
+
+    <!-- Supplier -->
+    <div class="mb-3">
+      <label for="supplier-oib" class="form-label">Dobavljač</label>
+      <div class="input-group mb-2">
+        <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača">
+        <button class="btn btn-outline-info" type="button" id="fetch-supplier">
+          📥
+        </button>
+      </div>
+      <input type="text" class="form-control" id="supplier-name" placeholder="Unesite naziv dobavljača">
+    </div>
+
+
+    <!-- Items container -->
+    <div id="items-container">
+    </div>
+
+    <div class="d-flex gap-2 mb-3">
+      <button type="button" id="add-item" class="btn btn-secondary">Dodaj stavku</button>
+      <button type="button" id="generate" class="btn btn-success">Generiraj narudžbenicu</button>
+    </div>
+
+    <pre id="output" class="p-3 border bg-light rounded"></pre>
+  </main>
+
+  <script src="./src/bootstrap.js"></script>
+  <script>
+    const currency = "EUR";
+    const itemsContainer = document.getElementById("items-container");
+    let itemCounter = 0;
+
+    // Add new item row
+    document.getElementById("add-item").addEventListener("click", function() {
+      const itemRow = document.createElement("div");
+      itemRow.classList.add("border", "p-3", "mb-3", "rounded", "bg-light-subtle");
+      itemRow.innerHTML = `
+        <div class="mb-2">
+          <label class="form-label">Stavka ${++itemCounter} (Proizvod/Usluga)</label>
+          <input type="text" class="form-control item-name" placeholder="Naziv proizvoda ili usluge">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Količina</label>
+          <input type="number" class="form-control item-qty" placeholder="Unesite količinu">
+        </div>
+        <div>
+          <label class="form-label">Jedinična cijena (${currency})</label>
+          <input type="number" class="form-control item-price" step="0.01" placeholder="Unesite cijenu">
+        </div>
+      `;
+      itemsContainer.appendChild(itemRow);
+    });
+
+    // Fetch buyer/supplier by OIB (example)
+    document.getElementById("fetch-buyer").addEventListener("click", function() {
+      const oib = document.getElementById("buyer-oib").value.trim();
+      if (!oib) { alert("Unesite OIB kupca."); return; }
+      // Example: Replace with real API call
+      document.getElementById("buyer-name").value = "Example Buyer Name for OIB " + oib;
+    });
+
+    document.getElementById("fetch-supplier").addEventListener("click", function() {
+      const oib = document.getElementById("supplier-oib").value.trim();
+      if (!oib) { alert("Unesite OIB dobavljača."); return; }
+      // Example: Replace with real API call
+      document.getElementById("supplier-name").value = "Example Supplier Name for OIB " + oib;
+    });
+
+    // Generate order
+    document.getElementById("generate").addEventListener("click", function() {
+      const buyerOIB = document.getElementById("buyer-oib").value.trim();
+      const buyerName = document.getElementById("buyer-name").value.trim();
+      const supplierOIB = document.getElementById("supplier-oib").value.trim();
+      const supplierName = document.getElementById("supplier-name").value.trim();
+      
+      if (!buyerOIB || !buyerName || !supplierOIB || !supplierName) {
+        alert("Molimo unesite OIB i naziv kupca/dobavljača.");
+        return;
+      }
+
+      const names = document.querySelectorAll(".item-name");
+      const qtys = document.querySelectorAll(".item-qty");
+      const prices = document.querySelectorAll(".item-price");
+
+      let orderText = `NARUDŽBENICA\nKupac: ${buyerName} (OIB: ${buyerOIB})\nDobavljač: ${supplierName} (OIB: ${supplierOIB})\n\nSTAVKE:\n`;
+      let grandTotal = 0;
+
+      for (let i = 0; i < names.length; i++) {
+        const name = names[i].value.trim();
+        const qty = parseFloat(qtys[i].value);
+        const price = parseFloat(prices[i].value);
+
+        if (!name || isNaN(qty) || isNaN(price)) {
+          alert("Molimo ispunite sve stavke.");
+          return;
+        }
+
+        const total = qty * price;
+        grandTotal += total;
+
+        orderText += `- ${name} | ${qty} kom | ${price.toFixed(2)} ${currency} | Ukupno: ${total.toFixed(2)} ${currency}\n`;
+      }
+
+      orderText += `\nUKUPNO ZA PLATITI: ${grandTotal.toFixed(2)} ${currency}\nDatum: ${new Date().toLocaleDateString("hr-HR")}`;
+
+      document.getElementById("output").textContent = orderText;
+    });
+  </script>
+</body>
+</html>
