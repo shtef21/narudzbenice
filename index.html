@@ -13,7 +13,7 @@
     <div class="mb-3">
       <label for="buyer-oib" class="form-label">Kupac</label>
       <div class="input-group mb-2">
-        <input type="text" class="form-control" id="buyer-oib" placeholder="Unesite OIB kupca">
+        <input type="text" class="form-control" id="buyer-oib" placeholder="Unesite OIB kupca" value="84214771175">
         <button class="btn btn-outline-info" type="button" id="fetch-buyer">
           📥
         </button>
@@ -25,7 +25,7 @@
     <div class="mb-3">
       <label for="supplier-oib" class="form-label">Dobavljač</label>
       <div class="input-group mb-2">
-        <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača">
+        <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača" value="29756659895">
         <button class="btn btn-outline-info" type="button" id="fetch-supplier">
           📥
         </button>
@@ -73,19 +73,28 @@
       itemsContainer.appendChild(itemRow);
     });
 
-    // Fetch buyer/supplier by OIB (example)
+    // Function used for fetching data by oib
+    function fetchDataByOib(oib, destEl) {
+      return fetch(`/dohvati-podatke?oib=${oib}`)
+        .then(res => res.json())
+        .then(data => document.getElementById(destEl).value = data.name)
+        .catch(console.log)
+    }
+
+    // Fetch buyer by OIB (example)
     document.getElementById("fetch-buyer").addEventListener("click", function() {
       const oib = document.getElementById("buyer-oib").value.trim();
       if (!oib) { alert("Unesite OIB kupca."); return; }
-      // Example: Replace with real API call
-      document.getElementById("buyer-name").value = "Example Buyer Name for OIB " + oib;
+
+      fetchDataByOib(oib, "buyer-name");
     });
 
+    // Fetch supplier by OIB (example)
     document.getElementById("fetch-supplier").addEventListener("click", function() {
       const oib = document.getElementById("supplier-oib").value.trim();
       if (!oib) { alert("Unesite OIB dobavljača."); return; }
-      // Example: Replace with real API call
-      document.getElementById("supplier-name").value = "Example Supplier Name for OIB " + oib;
+      
+      fetchDataByOib(oib, "supplier-name");
     });
 
     // Generate order
