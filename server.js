@@ -20,7 +20,6 @@ app.get('/dohvati-podatke', async (req, res) => {
     const dataUrl = `https://infobiz.fina.hr/tvrtka/-/OIB-${oib}`;
     console.log(`Dohvaćanje podataka za ${oib}`);
     const html = await fetch(dataUrl).then(res => res.text());
-    console.log('Dohvaćeno.');
     
     const dom = new JSDOM(html);
     const document = dom.window.document;
@@ -28,7 +27,7 @@ app.get('/dohvati-podatke', async (req, res) => {
     const itemDiv = [...document.querySelectorAll('.item-fina-public > div')]
       .filter(el => el.textContent.trim().startsWith('Naziv:'))[0];
     // Get the second child if the element exists
-    const name = itemDiv && itemDiv.children[1] ? itemDiv.children[1].textContent.trim() : 'Element not found';
+    const name = itemDiv && itemDiv.children[1] ? itemDiv.children[1].textContent.trim() : 'Naziv nije pronađen';
 
     res.json({ oib, name });
   } catch (error) {

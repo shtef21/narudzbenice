@@ -39,9 +39,10 @@
     </div>
 
     <div class="d-flex gap-2 mb-3">
-      <button type="button" id="add-item" class="btn btn-secondary">Dodaj stavku</button>
-      <button type="button" id="generate_text" class="btn btn-success">Generiraj narudžbenicu (tekst)</button>
-      <button type="button" id="generate_pdf" class="btn btn-success">Generiraj narudžbenicu (PDF)</button>
+      <button type="button" id="add-item" class="btn btn-primary">Dodaj stavku</button>
+      <button type="button" id="remove-item" class="btn btn-danger">Ukloni posljednju stavku</button>
+      <button type="button" id="generate_text" class="btn btn-success">Generiraj tekst</button>
+      <button type="button" id="generate_pdf" class="btn btn-success">Generiraj PDF</button>
     </div>
 
     <pre id="output" class="p-3 border bg-light rounded"></pre>
@@ -50,43 +51,6 @@
   <script src="./bootstrap.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-  <script>
-    document.getElementById("generate_pdf").addEventListener("click", () => {
-      const docDefinition = {
-        content: [
-          { text: 'Purchase Order', style: 'header' },
-          { text: 'Generated with pdfmake\n\n' },
-          { text: 'Table Example:', style: 'subheader' },
-          {
-            table: {
-              headerRows: 1,
-              widths: ['*', 'auto', 100, '*'],
-              body: [
-                ['Product', 'Qty', 'Price', 'Total'],
-                ['Apples', 3, '2.00 EUR', '6.00 EUR'],
-                ['Bananas', 5, '1.50 EUR', '7.50 EUR'],
-                ['Oranges', 2, '3.00 EUR', '6.00 EUR']
-              ]
-            }
-          }
-        ],
-        styles: {
-          header: {
-            fontSize: 18,
-            bold: true,
-            margin: [0, 0, 0, 10]
-          },
-          subheader: {
-            fontSize: 14,
-            bold: true,
-            margin: [0, 10, 0, 5]
-          }
-        }
-      };
-
-      pdfMake.createPdf(docDefinition).download('order.pdf');
-    })
-  </script>
   <script>
     const currency = "EUR";
     const itemsContainer = document.getElementById("items-container");
@@ -111,6 +75,17 @@
         </div>
       `;
       itemsContainer.appendChild(itemRow);
+    });
+    
+    // Remove last item row
+    document.getElementById("remove-item").addEventListener("click", function() {
+      const itemsContainer = document.getElementById("items-container");
+      if (itemsContainer.lastElementChild) {
+        itemsContainer.removeChild(itemsContainer.lastElementChild);
+        --itemCounter;
+      } else {
+        alert("Nema stavki za izbrisati.");
+      }
     });
 
     // Function used for fetching data by oib
@@ -137,45 +112,136 @@
       fetchDataByOib(oib, "supplier-name");
     });
 
-    // Generate order
-    document.getElementById("generate_text").addEventListener("click", function() {
+    // Get form data
+    function getFormData() {
       const buyerOIB = document.getElementById("buyer-oib").value.trim();
       const buyerName = document.getElementById("buyer-name").value.trim();
       const supplierOIB = document.getElementById("supplier-oib").value.trim();
       const supplierName = document.getElementById("supplier-name").value.trim();
-      
-      if (!buyerOIB || !buyerName || !supplierOIB || !supplierName) {
-        alert("Molimo unesite OIB i naziv kupca/dobavljača.");
-        return;
-      }
 
       const names = document.querySelectorAll(".item-name");
       const qtys = document.querySelectorAll(".item-qty");
       const prices = document.querySelectorAll(".item-price");
+      const items = names.length === 0 ? [] : [...names].map((_, idx) => {
+        const name = names[idx].value.trim();
+        const quantity = parseFloat(qtys[idx].value);
+        const price = parseFloat(prices[idx].value);
+        const total = quantity * price;
+        return { name, quantity, price, total };
+      }).filter((item) => item.name || item.quantity || item.price || item.total);
+      const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
+      return {
+        buyerOIB,
+        buyerName,
+        supplierOIB,
+        supplierName,
+        items,
+        grandTotal,
+        created: new Date(),
+        createdStr: new Date().toLocaleDateString("hr-HR"),
+      };
+    }
 
-      let orderText = `NARUDŽBENICA\nKupac: ${buyerName} (OIB: ${buyerOIB})\nDobavljač: ${supplierName} (OIB: ${supplierOIB})\n\nSTAVKE:\n`;
-      let grandTotal = 0;
-
-      for (let i = 0; i < names.length; i++) {
-        const name = names[i].value.trim();
-        const qty = parseFloat(qtys[i].value);
-        const price = parseFloat(prices[i].value);
-
-        if (!name || isNaN(qty) || isNaN(price)) {
-          alert("Molimo ispunite sve stavke.");
-          return;
+    // Validate data of the form
+    function validateFormData(formData) {
+      if (!formData.buyerOIB || !formData.buyerName || !formData.supplierOIB || !formData.supplierName) {
+        alert("Molimo unesite OIB i naziv kupca/dobavljača.");
+        return false;
+      }
+      if (formData.items.length === 0) {
+        alert("Molimo unesite barem 1 stavku pritiskom na gumb 'Dodaj stavku'.");
+        return false;
+      }
+      for (let i = 0; i < formData.items.length; i++) {
+        let item = formData.items[i];
+        if (!item.name || isNaN(item.quantity) || isNaN(item.price)) {
+          alert("Molimo unesite sve podatke stavke broj " + (i+1) + ".");
+          return false;
         }
+      }
+    }
 
-        const total = qty * price;
-        grandTotal += total;
+    // Generate text
+    document.getElementById("generate_text").addEventListener("click", function() {
+      const formData = getFormData();
 
-        orderText += `- ${name} | ${qty} kom | ${price.toFixed(2)} ${currency} | Ukupno: ${total.toFixed(2)} ${currency}\n`;
+      if (validateFormData(formData) === false) {
+        console.log('User did not fill entire form correctly.');
+        return;
       }
 
-      orderText += `\nUKUPNO ZA PLATITI: ${grandTotal.toFixed(2)} ${currency}\nDatum: ${new Date().toLocaleDateString("hr-HR")}`;
+      // Create output text
+      let orderText = `NARUDŽBENICA\nKupac: ${formData.buyerName} (OIB: ${formData.buyerOIB})\nDobavljač: ${formData.supplierName} (OIB: ${formData.supplierOIB})\n\nSTAVKE:\n`;
+      for (let item of formData.items) {
+        orderText += `- ${item.name} | ${item.quantity} kom | ${item.price.toFixed(2)} ${currency} | Ukupno: ${item.total.toFixed(2)} ${currency}\n`;
+      }
+      orderText += `\nUKUPNO ZA PLATITI: ${formData.grandTotal.toFixed(2)} ${currency}\nDatum: ${formData.createdStr}`;
 
       document.getElementById("output").textContent = orderText;
     });
+
+    // Generate PDF
+    document.getElementById("generate_pdf").addEventListener("click", () => {
+      const formData = getFormData();
+
+      if (validateFormData(formData) === false) {
+        console.log('User did not fill entire form correctly.');
+        return;
+      }
+
+      const docDefinition = {
+        content: [
+          { text: 'Narudžbenica', style: 'mainHeader', alignment: 'center' },
+          { text: 'Kupac', style: 'header' },
+          { text: 'OIB: ' + formData.buyerOIB },
+          { text: 'Naziv: ' + formData.buyerName },
+          { text: '\n' },
+          { text: 'Dobavljač', style: 'header' },
+          { text: 'OIB: ' + formData.supplierOIB },
+          { text: 'Naziv: ' + formData.supplierName },
+          { text: '\n' },
+          { text: 'Broj stavki: ' + formData.items.length + '\nUkupna cijena (EUR): ' + formData.grandTotal },
+          { text: 'Stavke:', style: 'subheader' },
+          {
+            table: {
+              headerRows: 1,
+              widths: ['*', 'auto', 100, '*'],
+              body: [
+                [
+                  { text: 'Naziv', bold: true },
+                  { text: 'Količina', bold: true },
+                  { text: 'Cijena (EUR)', bold: true },
+                  { text: 'Ukupno (EUR)', bold: true }
+                ],
+                ...formData.items.map((item) => 
+                  [item.name, item.quantity, item.price.toFixed(2), item.total.toFixed(2)]
+                )
+              ]
+            }
+          },
+          { text: '\n Generirano ' + formData.createdStr }
+        ],
+        styles: {
+          mainHeader: {
+            fontSize: 22,
+            bold: true,
+            margin: [0, 0, 0, 20]
+          },
+          header: {
+            fontSize: 18,
+            bold: true,
+            margin: [0, 0, 0, 10]
+          },
+          subheader: {
+            fontSize: 14,
+            bold: true,
+            margin: [0, 10, 0, 5]
+          }
+        }
+      };
+
+      pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.supplierOIB + '.pdf');
+    })
   </script>
 </body>
 </html>
