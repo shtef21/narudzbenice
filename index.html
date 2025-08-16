@@ -40,13 +40,53 @@
 
     <div class="d-flex gap-2 mb-3">
       <button type="button" id="add-item" class="btn btn-secondary">Dodaj stavku</button>
-      <button type="button" id="generate" class="btn btn-success">Generiraj narudžbenicu</button>
+      <button type="button" id="generate_text" class="btn btn-success">Generiraj narudžbenicu (tekst)</button>
+      <button type="button" id="generate_pdf" class="btn btn-success">Generiraj narudžbenicu (PDF)</button>
     </div>
 
     <pre id="output" class="p-3 border bg-light rounded"></pre>
   </main>
 
   <script src="./bootstrap.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
+  <script>
+    document.getElementById("generate_pdf").addEventListener("click", () => {
+      const docDefinition = {
+        content: [
+          { text: 'Purchase Order', style: 'header' },
+          { text: 'Generated with pdfmake\n\n' },
+          { text: 'Table Example:', style: 'subheader' },
+          {
+            table: {
+              headerRows: 1,
+              widths: ['*', 'auto', 100, '*'],
+              body: [
+                ['Product', 'Qty', 'Price', 'Total'],
+                ['Apples', 3, '2.00 EUR', '6.00 EUR'],
+                ['Bananas', 5, '1.50 EUR', '7.50 EUR'],
+                ['Oranges', 2, '3.00 EUR', '6.00 EUR']
+              ]
+            }
+          }
+        ],
+        styles: {
+          header: {
+            fontSize: 18,
+            bold: true,
+            margin: [0, 0, 0, 10]
+          },
+          subheader: {
+            fontSize: 14,
+            bold: true,
+            margin: [0, 10, 0, 5]
+          }
+        }
+      };
+
+      pdfMake.createPdf(docDefinition).download('order.pdf');
+    })
+  </script>
   <script>
     const currency = "EUR";
     const itemsContainer = document.getElementById("items-container");
@@ -98,7 +138,7 @@
     });
 
     // Generate order
-    document.getElementById("generate").addEventListener("click", function() {
+    document.getElementById("generate_text").addEventListener("click", function() {
       const buyerOIB = document.getElementById("buyer-oib").value.trim();
       const buyerName = document.getElementById("buyer-name").value.trim();
       const supplierOIB = document.getElementById("supplier-oib").value.trim();
