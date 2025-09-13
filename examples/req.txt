@@ -1,0 +1,8 @@
+Broj narudžbenice - automatizmom
+Podaci o naručitelju - uvijek isto
+Adresa subjekta - jednom unesen da ga predloži
+Postotak; ručni odabir 0%, 5%, 13%, 25%, ali izračunava sam
+Klasa - fiksna za jednu godinu
+urbroj - generira sljedeći
+Dostava - ručni odabir (paketna dostava, prijevoz isporučitelja, prijevoz naručitelja, ostalo)
+Roba, radovi, usluga ponudi pa se ručno odabere
