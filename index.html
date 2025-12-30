@@ -4,14 +4,36 @@
   <meta charset="UTF-8">
   <title>Generiranje narudžbenice</title>
   <link href="./bootstrap.css" rel="stylesheet">
+
+  <!-- TODO - delete when development over -->
+  <script>
+    let prevHtml = null;
+    setInterval(async () => {
+      const html = await fetch(location.href).then(res => res.text());
+      if (prevHtml !== null && html !== prevHtml) {
+        location.reload();
+      } else {
+        prevHtml = html;
+      }
+    }, 1000);
+  </script>
 </head>
 <body class="bg-light">
   <main class="container my-4 p-4 bg-white rounded shadow-sm">
     <h1 class="mb-4">Generiranje narudžbenice</h1>
 
+    <p id="znj">
+    </p>
+
+    <!-- Doc ID -->
+    <div class="mb-3">
+      <label for="doc-id" class="form-label fw-bold">Broj narudžbenice</label>
+      <input type="number" class="form-control" id="doc-id" placeholder="Unesite broj narudžbenice">
+    </div>
+
     <!-- Buyer -->
     <div class="mb-3">
-      <label for="buyer-oib" class="form-label">Kupac</label>
+      <label for="buyer-oib" class="form-label fw-bold">Kupac</label>
       <div class="input-group mb-2">
         <input type="text" class="form-control" id="buyer-oib" placeholder="Unesite OIB kupca" value="84214771175">
         <button class="btn btn-outline-info" type="button" id="fetch-buyer">
@@ -23,7 +45,7 @@
 
     <!-- Supplier -->
     <div class="mb-3">
-      <label for="supplier-oib" class="form-label">Dobavljač</label>
+      <label for="supplier-oib" class="form-label fw-bold">Dobavljač</label>
       <div class="input-group mb-2">
         <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača" value="29756659895">
         <button class="btn btn-outline-info" type="button" id="fetch-supplier">
@@ -33,52 +55,102 @@
       <input type="text" class="form-control" id="supplier-name" placeholder="Unesite naziv dobavljača">
     </div>
 
-
     <!-- Items container -->
     <div id="items-container">
     </div>
 
+    <!-- Buttons -->
     <div class="d-flex gap-2 mb-3">
       <button type="button" id="add-item" class="btn btn-primary">Dodaj stavku</button>
       <button type="button" id="remove-item" class="btn btn-danger">Ukloni posljednju stavku</button>
-      <button type="button" id="generate_text" class="btn btn-success">Generiraj tekst</button>
-      <button type="button" id="generate_pdf" class="btn btn-success">Generiraj PDF</button>
+      <button type="button" id="generate-text" class="btn btn-success">Generiraj tekst</button>
+      <button type="button" id="generate-pdf" class="btn btn-success">Generiraj PDF</button>
     </div>
 
     <pre id="output" class="p-3 border bg-light rounded"></pre>
   </main>
 
+  <template id="template-stavka">
+    <div class="mb-2">
+      <label class="form-label fw-bold">Stavka BROJ_STAVKE (Proizvod/Usluga)</label>
+      <div class="input-group mb-2">
+        <input id="stavka-name-BROJ_STAVKE" type="text" class="form-control item-name" placeholder="Naziv proizvoda ili usluge">
+        <button id="stavka-onclick-BROJ_STAVKE" class="d-none btn btn-outline-info" type="button" onclick="loadItemFromCache(BROJ_STAVKE)">
+          📥
+        </button>
+      </div>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Količina</label>
+      <input id="stavka-qty-BROJ_STAVKE" type="number" class="form-control item-qty" placeholder="Unesite količinu">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">PDV (%)</label>
+      <input id="stavka-pdv-BROJ_STAVKE" type="number" class="form-control item-pdv" placeholder="Unesite iznos PDVa">
+    </div>
+    <div>
+      <label class="form-label">Jedinična cijena (EUR)</label>
+      <input id="stavka-price-BROJ_STAVKE" type="number" class="form-control item-price" step="0.01" placeholder="Unesite cijenu">
+    </div>
+  </template>
+
   <script src="./bootstrap.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
   <script>
-    const currency = "EUR";
+    // Control fields
+    const templateStavka = document.getElementById('template-stavka');
+    const formCacheKey = 'podaci-narudzbenice';
+    const itemsCacheKey = 'podaci-narudzbenice-stavke';
     const itemsContainer = document.getElementById("items-container");
-    let itemCounter = 0;
+    let itemCounter = 1;
+
+    // Buttons
+    const addItem = document.getElementById("add-item");
+    const removeItem = document.getElementById("remove-item");
+    const fetchBuyer = document.getElementById("fetch-buyer");
+    const fetchSupplier = document.getElementById("fetch-supplier");
+    const generateText = document.getElementById("generate-text");
+    const generatePdf = document.getElementById("generate-pdf");
+
+    // Form fields
+    const i_documentID = document.getElementById("doc-id");
+    const i_buyerOIB = document.getElementById("buyer-oib");
+    const i_buyerName = document.getElementById("buyer-name");
+    const i_supplierOIB = document.getElementById("supplier-oib");
+    const i_supplierName = document.getElementById("supplier-name");
 
     // Add new item row
-    document.getElementById("add-item").addEventListener("click", function() {
+    addItem.addEventListener("click", function() {
+      // Generate HTML
       const itemRow = document.createElement("div");
       itemRow.classList.add("border", "p-3", "mb-3", "rounded", "bg-light-subtle");
-      itemRow.innerHTML = `
-        <div class="mb-2">
-          <label class="form-label">Stavka ${++itemCounter} (Proizvod/Usluga)</label>
-          <input type="text" class="form-control item-name" placeholder="Naziv proizvoda ili usluge">
-        </div>
-        <div class="mb-2">
-          <label class="form-label">Količina</label>
-          <input type="number" class="form-control item-qty" placeholder="Unesite količinu">
-        </div>
-        <div>
-          <label class="form-label">Jedinična cijena (${currency})</label>
-          <input type="number" class="form-control item-price" step="0.01" placeholder="Unesite cijenu">
-        </div>
-      `;
+      itemRow.innerHTML = templateStavka.innerHTML.replaceAll('BROJ_STAVKE', itemCounter);
       itemsContainer.appendChild(itemRow);
+
+      // Data handlers
+      const i_name = document.getElementById('stavka-name-' + itemCounter);
+      const i_button = document.getElementById('stavka-onclick-' + itemCounter);
+      i_name.addEventListener('keyup', () => {
+        let existsInCache = false;
+        const cachedItems = loadFromCache(itemsCacheKey);
+        cachedItems?.forEach((item) => {
+          if (item.name.toLowerCase() === i_name.value.trim().toLowerCase()) {
+            existsInCache = true;
+          }
+        })
+        if (existsInCache) {
+          i_button.classList.remove('d-none');
+        } else {
+          i_button.classList.add('d-none');
+        }
+      });
+
+      itemCounter++;
     });
     
     // Remove last item row
-    document.getElementById("remove-item").addEventListener("click", function() {
+    removeItem.addEventListener("click", function() {
       const itemsContainer = document.getElementById("items-container");
       if (itemsContainer.lastElementChild) {
         itemsContainer.removeChild(itemsContainer.lastElementChild);
@@ -97,7 +169,7 @@
     }
 
     // Fetch buyer by OIB (example)
-    document.getElementById("fetch-buyer").addEventListener("click", function() {
+    fetchBuyer.addEventListener("click", function() {
       const oib = document.getElementById("buyer-oib").value.trim();
       if (!oib) { alert("Unesite OIB kupca."); return; }
 
@@ -105,7 +177,7 @@
     });
 
     // Fetch supplier by OIB (example)
-    document.getElementById("fetch-supplier").addEventListener("click", function() {
+    fetchSupplier.addEventListener("click", function() {
       const oib = document.getElementById("supplier-oib").value.trim();
       if (!oib) { alert("Unesite OIB dobavljača."); return; }
       
@@ -114,55 +186,107 @@
 
     // Get form data
     function getFormData() {
-      const buyerOIB = document.getElementById("buyer-oib").value.trim();
-      const buyerName = document.getElementById("buyer-name").value.trim();
-      const supplierOIB = document.getElementById("supplier-oib").value.trim();
-      const supplierName = document.getElementById("supplier-name").value.trim();
+      // Basic values
+      const documentID = i_documentID.value.trim();
+      const buyerOIB = i_buyerOIB.value.trim();
+      const buyerName = i_buyerName.value.trim();
+      const supplierOIB = i_supplierOIB.value.trim();
+      const supplierName = i_supplierName.value.trim();
 
+      // Items
       const names = document.querySelectorAll(".item-name");
       const qtys = document.querySelectorAll(".item-qty");
+      const pdvs = document.querySelectorAll(".item-pdv")
       const prices = document.querySelectorAll(".item-price");
       const items = names.length === 0 ? [] : [...names].map((_, idx) => {
         const name = names[idx].value.trim();
         const quantity = parseFloat(qtys[idx].value);
+        const pdv = parseFloat(pdvs[idx].value);
         const price = parseFloat(prices[idx].value);
+        const pricePdv = price * (pdv / 100);
         const total = quantity * price;
-        return { name, quantity, price, total };
+        const totalPdv = quantity * pricePdv;
+        return { name, quantity, pdv, price, pricePdv, total, totalPdv };
       }).filter((item) => item.name || item.quantity || item.price || item.total);
+
+      // Computed values
       const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
+      const grandTotalPdv = items.reduce((sum, item) => sum + item.totalPdv, 0);
       return {
+        documentID,
         buyerOIB,
         buyerName,
         supplierOIB,
         supplierName,
         items,
         grandTotal,
+        grandTotalPdv,
         created: new Date(),
         createdStr: new Date().toLocaleDateString("hr-HR"),
+        createdStrNospace: new Date().toLocaleDateString("hr-HR").replaceAll(' ', ''),
       };
     }
 
     // Validate data of the form
     function validateFormData(formData) {
+      if (!formData.documentID) {
+        alert("Molimo unesite broj narudžbenice");
+        return false;
+      }
+
       if (!formData.buyerOIB || !formData.buyerName || !formData.supplierOIB || !formData.supplierName) {
         alert("Molimo unesite OIB i naziv kupca/dobavljača.");
         return false;
       }
       if (formData.items.length === 0) {
-        alert("Molimo unesite barem 1 stavku pritiskom na gumb 'Dodaj stavku'.");
+        alert("Molimo unesite barem 1 stavku pritiskom na gumb 'Dodaj stavku' te ispunite sve podatke.");
         return false;
       }
       for (let i = 0; i < formData.items.length; i++) {
         let item = formData.items[i];
-        if (!item.name || isNaN(item.quantity) || isNaN(item.price)) {
+        if (!item.name || isNaN(item.quantity) || isNaN(item.pdv) || isNaN(item.price)) {
           alert("Molimo unesite sve podatke stavke broj " + (i+1) + ".");
           return false;
         }
       }
     }
 
+    // Save data to cache
+    function saveToCache(key, data) {
+      if (key === formCacheKey) {
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+      else if (key === itemsCacheKey) {
+        let prevItems = (loadFromCache(itemsCacheKey) || []).filter(item => !data.find(i => i.name === item.name));
+        const itemsJson = JSON.stringify([...prevItems, ...data]);
+        localStorage.setItem(key, itemsJson);
+      }
+    }
+
+    // Load data from cache
+    function loadFromCache(key) {
+      return JSON.parse(localStorage.getItem(key));
+    }
+
+    // Load item value from cache
+    function loadItemFromCache(brojStavke) {
+      const i_name = document.getElementById('stavka-name-' + brojStavke);
+      const i_qty = document.getElementById('stavka-qty-' + brojStavke);
+      const i_pdv = document.getElementById('stavka-pdv-' + brojStavke)
+      const i_price = document.getElementById('stavka-price-' + brojStavke);
+      const cachedItems = loadFromCache(itemsCacheKey);
+
+      cachedItems?.forEach((item) => {
+        if (item.name.toLowerCase() === i_name.value.trim().toLowerCase()) {
+          i_qty.value = item.quantity;
+          i_pdv.value = item.pdv;
+          i_price.value = item.price;
+        }
+      })
+    }
+
     // Generate text
-    document.getElementById("generate_text").addEventListener("click", function() {
+    generateText.addEventListener("click", function() {
       const formData = getFormData();
 
       if (validateFormData(formData) === false) {
@@ -171,17 +295,20 @@
       }
 
       // Create output text
-      let orderText = `NARUDŽBENICA\nKupac: ${formData.buyerName} (OIB: ${formData.buyerOIB})\nDobavljač: ${formData.supplierName} (OIB: ${formData.supplierOIB})\n\nSTAVKE:\n`;
+      let orderText = `NARUDŽBENICA ${formData.documentID}\nKupac: ${formData.buyerName} (OIB: ${formData.buyerOIB})\nDobavljač: ${formData.supplierName} (OIB: ${formData.supplierOIB})\n\nSTAVKE:\n`;
       for (let item of formData.items) {
-        orderText += `- ${item.name} | ${item.quantity} kom | ${item.price.toFixed(2)} ${currency} | Ukupno: ${item.total.toFixed(2)} ${currency}\n`;
+        orderText += `- ${item.name} | ${item.quantity} kom | ${item.price.toFixed(2)} EUR | ${item.pdv.toFixed(2)}% PDV | Ukupno: ${item.total.toFixed(2)} EUR (${item.totalPdv.toFixed(2)} EUR PDV)\n`;
       }
-      orderText += `\nUKUPNO ZA PLATITI: ${formData.grandTotal.toFixed(2)} ${currency}\nDatum: ${formData.createdStr}`;
+      orderText += `\nIznos PDVa: ${formData.grandTotalPdv.toFixed(2)} EUR`;
+      orderText += `\nUKUPNO ZA PLATITI: ${formData.grandTotal.toFixed(2)} EUR\nDatum: ${formData.createdStr}`;
 
       document.getElementById("output").textContent = orderText;
+      saveToCache(formCacheKey, formData);
+      saveToCache(itemsCacheKey, formData.items);
     });
 
     // Generate PDF
-    document.getElementById("generate_pdf").addEventListener("click", () => {
+    generatePdf.addEventListener("click", () => {
       const formData = getFormData();
 
       if (validateFormData(formData) === false) {
@@ -191,7 +318,7 @@
 
       const docDefinition = {
         content: [
-          { text: 'Narudžbenica', style: 'mainHeader', alignment: 'center' },
+          { text: 'Narudžbenica br. ' + formData.documentID, style: 'mainHeader', alignment: 'center' },
           { text: 'Kupac', style: 'header' },
           { text: 'OIB: ' + formData.buyerOIB },
           { text: 'Naziv: ' + formData.buyerName },
@@ -240,8 +367,28 @@
         }
       };
 
-      pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.supplierOIB + '.pdf');
+      pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.supplierOIB + '-' + formData.createdStrNospace + '.pdf');
+      saveToCache(formCacheKey, formData);
     })
+
+
+    async function setupDocument() {
+      // Add an item
+      addItem.click();
+
+      // Set document ID
+      const cachedForm = loadFromCache(formCacheKey);
+      if (cachedForm) {
+        i_documentID.value = parseInt(cachedForm.documentID) + 1;
+        i_buyerOIB.value = cachedForm.buyerOIB;
+        i_buyerName.value = cachedForm.buyerName;
+      }
+
+      const cachedItems = loadFromCache(itemsCacheKey);
+      znj.innerHTML = JSON.stringify(cachedForm) + '<br><br>' + JSON.stringify(cachedItems);
+    }
+    setupDocument();
+
   </script>
 </body>
 </html>
