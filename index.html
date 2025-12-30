@@ -2,7 +2,7 @@
 <html lang="hr">
 <head>
   <meta charset="UTF-8">
-  <title>Generiranje narudžbenice</title>
+  <title>Narudžbenice</title>
   <link href="./bootstrap.css" rel="stylesheet">
 
   <!-- TODO - delete when development over -->
@@ -22,18 +22,31 @@
   <main class="container my-4 p-4 bg-white rounded shadow-sm">
     <h1 class="mb-4">Generiranje narudžbenice</h1>
 
-    <p id="znj">
-    </p>
-
     <!-- Doc ID -->
     <div class="mb-3">
-      <label for="doc-id" class="form-label fw-bold">Broj narudžbenice</label>
+      <label for="doc-id" class="form-label fw-bold">
+        Broj narudžbenice
+        <img
+          src="./info.svg" 
+          title="Broj narudžbenice automatski se povećava nakon svakog generiranja narudžbenice, a može se i ručno postaviti"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
       <input type="number" class="form-control" id="doc-id" placeholder="Unesite broj narudžbenice">
     </div>
 
     <!-- Buyer -->
     <div class="mb-3">
-      <label for="buyer-oib" class="form-label fw-bold">Kupac</label>
+      <label for="buyer-oib" class="form-label fw-bold">
+        Kupac
+        <img
+          src="./info.svg" 
+          title="Podaci o kupcu automatski se popunjavaju nakon prvog generiranja narudžbenice"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
       <div class="input-group mb-2">
         <input type="text" class="form-control" id="buyer-oib" placeholder="Unesite OIB kupca" value="84214771175">
         <button class="btn btn-outline-info" type="button" id="fetch-buyer">
@@ -55,6 +68,20 @@
       <input type="text" class="form-control" id="supplier-name" placeholder="Unesite naziv dobavljača">
     </div>
 
+    <!-- Delivery -->
+    <div class="mb-4">
+      <label for="delivery" class="form-label fw-bold">
+        Dostava
+        <img
+          src="./info.svg" 
+          title="Može biti: paketna dostava, prijevoz isporučitelja, prijevoz naručitelja, ostalo"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
+      <input type="text" class="form-control" id="delivery" placeholder="Unesite tip dostave">
+    </div>
+
     <!-- Items container -->
     <div id="items-container">
     </div>
@@ -70,9 +97,18 @@
     <pre id="output" class="p-3 border bg-light rounded"></pre>
   </main>
 
+  <!-- Item template -->
   <template id="template-stavka">
     <div class="mb-2">
-      <label class="form-label fw-bold">Stavka BROJ_STAVKE (Proizvod/Usluga)</label>
+      <label class="form-label fw-bold">
+        Stavka BROJ_STAVKE (Proizvod/Usluga)
+        <img
+          src="./info.svg" 
+          title="Upisom stavki s ranijih narudžbenica pojavljuje se mogućnost brzog unosa količine, PDVa i cijene"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
       <div class="input-group mb-2">
         <input id="stavka-name-BROJ_STAVKE" type="text" class="form-control item-name" placeholder="Naziv proizvoda ili usluge">
         <button id="stavka-onclick-BROJ_STAVKE" class="d-none btn btn-outline-info" type="button" onclick="loadItemFromCache(BROJ_STAVKE)">
@@ -119,6 +155,7 @@
     const i_buyerName = document.getElementById("buyer-name");
     const i_supplierOIB = document.getElementById("supplier-oib");
     const i_supplierName = document.getElementById("supplier-name");
+    const i_delivery = document.getElementById("delivery");
 
     // Add new item row
     addItem.addEventListener("click", function() {
@@ -192,6 +229,7 @@
       const buyerName = i_buyerName.value.trim();
       const supplierOIB = i_supplierOIB.value.trim();
       const supplierName = i_supplierName.value.trim();
+      const deliveryType = i_delivery.value.trim();
 
       // Items
       const names = document.querySelectorAll(".item-name");
@@ -218,6 +256,7 @@
         buyerName,
         supplierOIB,
         supplierName,
+        deliveryType,
         items,
         grandTotal,
         grandTotalPdv,
@@ -235,6 +274,10 @@
 
       if (!formData.buyerOIB || !formData.buyerName || !formData.supplierOIB || !formData.supplierName) {
         alert("Molimo unesite OIB i naziv kupca/dobavljača.");
+        return false;
+      }
+      if (!formData.deliveryType) {
+        alert("Molimo unesite dostavu.");
         return false;
       }
       if (formData.items.length === 0) {
@@ -257,7 +300,11 @@
       }
       else if (key === itemsCacheKey) {
         let prevItems = (loadFromCache(itemsCacheKey) || []).filter(item => !data.find(i => i.name === item.name));
-        const itemsJson = JSON.stringify([...prevItems, ...data]);
+        const lowercasedItems = [...prevItems, ...data].map(item => ({
+          ...item,
+          name: item.name.toLowerCase(),
+        }));
+        const itemsJson = JSON.stringify(lowercasedItems);
         localStorage.setItem(key, itemsJson);
       }
     }
@@ -298,6 +345,7 @@
       for (let item of formData.items) {
         orderText += `- ${item.name} | ${item.quantity} kom | ${item.price.toFixed(2)} EUR | ${item.pdv.toFixed(2)}% PDV | Ukupno: ${item.total.toFixed(2)} EUR (${item.totalPdv.toFixed(2)} EUR PDV)\n`;
       }
+      orderText += `\nDostava: ${formData.deliveryType}`;
       orderText += `\nIznos PDVa: ${formData.grandTotalPdv.toFixed(2)} EUR`;
       orderText += `\nUKUPNO ZA PLATITI: ${formData.grandTotal.toFixed(2)} EUR\nDatum: ${formData.createdStr}`;
 
@@ -326,7 +374,7 @@
           { text: 'OIB: ' + formData.supplierOIB },
           { text: 'Naziv: ' + formData.supplierName },
           { text: '\n' },
-          { text: 'Broj stavki: ' + formData.items.length + '\nUkupni iznos PDVa (EUR): ' + formData.grandTotalPdv.toFixed(2) + '\nUkupna cijena (EUR): ' + formData.grandTotal.toFixed(2) },
+          { text: 'Dostava: ' + formData.deliveryType + '\nBroj stavki: ' + formData.items.length + '\nUkupni iznos PDVa (EUR): ' + formData.grandTotalPdv.toFixed(2) + '\nUkupna cijena (EUR): ' + formData.grandTotal.toFixed(2) },
           { text: 'Stavke:', style: 'subheader' },
           {
             table: {
@@ -379,6 +427,7 @@
     })
 
 
+    // Setup document
     async function setupDocument() {
       // Add an item
       addItem.click();
@@ -390,9 +439,6 @@
         i_buyerOIB.value = cachedForm.buyerOIB;
         i_buyerName.value = cachedForm.buyerName;
       }
-
-      const cachedItems = loadFromCache(itemsCacheKey);
-      znj.innerHTML = JSON.stringify(cachedForm) + '<br><br>' + JSON.stringify(cachedItems);
     }
     setupDocument();
 
