@@ -222,8 +222,7 @@
         grandTotal,
         grandTotalPdv,
         created: new Date(),
-        createdStr: new Date().toLocaleDateString("hr-HR"),
-        createdStrNospace: new Date().toLocaleDateString("hr-HR").replaceAll(' ', ''),
+        createdStr: new Date().toLocaleDateString("hr-HR").replaceAll(' ', ''),
       };
     }
 
@@ -327,21 +326,28 @@
           { text: 'OIB: ' + formData.supplierOIB },
           { text: 'Naziv: ' + formData.supplierName },
           { text: '\n' },
-          { text: 'Broj stavki: ' + formData.items.length + '\nUkupna cijena (EUR): ' + formData.grandTotal },
+          { text: 'Broj stavki: ' + formData.items.length + '\nUkupni iznos PDVa (EUR): ' + formData.grandTotalPdv.toFixed(2) + '\nUkupna cijena (EUR): ' + formData.grandTotal.toFixed(2) },
           { text: 'Stavke:', style: 'subheader' },
           {
             table: {
               headerRows: 1,
-              widths: ['*', 'auto', 100, '*'],
+              widths: ['*', 'auto', 'auto', 'auto', 'auto'],
               body: [
                 [
-                  { text: 'Naziv', bold: true },
+                  { text: 'Naziv', bold: true, wrap: true },
                   { text: 'Količina', bold: true },
                   { text: 'Cijena (EUR)', bold: true },
+                  { text: 'PDV (%)', bold: true },
                   { text: 'Ukupno (EUR)', bold: true }
                 ],
                 ...formData.items.map((item) => 
-                  [item.name, item.quantity, item.price.toFixed(2), item.total.toFixed(2)]
+                  [
+                    item.name,
+                    item.quantity,
+                    item.price.toFixed(2),
+                    item.pdv.toFixed(2),
+                    item.total.toFixed(2)
+                  ]
                 )
               ]
             }
@@ -367,8 +373,9 @@
         }
       };
 
-      pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.supplierOIB + '-' + formData.createdStrNospace + '.pdf');
+      pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.documentID + '.pdf');
       saveToCache(formCacheKey, formData);
+      saveToCache(itemsCacheKey, formData.items);
     })
 
 
