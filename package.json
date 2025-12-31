@@ -19,7 +19,6 @@
   "homepage": "https://github.com/shtef21/narudzbenice#readme",
   "dependencies": {
     "express": "^5.1.0",
-    "jsdom": "^26.1.0",
     "path": "^0.12.7"
   }
 }

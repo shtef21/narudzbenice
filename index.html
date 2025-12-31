@@ -47,24 +47,14 @@
           style="height: 1.5rem;"
         />
       </label>
-      <div class="input-group mb-2">
-        <input type="text" class="form-control" id="buyer-oib" placeholder="Unesite OIB kupca" value="84214771175">
-        <button title="Pritisnuti za dohvaćanje naziva tvrtke" class="btn btn-outline-info" type="button" id="fetch-buyer">
-          📥
-        </button>
-      </div>
+      <input type="text" class="form-control mb-2" id="buyer-oib" placeholder="Unesite OIB kupca" value="84214771175">
       <input type="text" class="form-control" id="buyer-name" placeholder="Unesite naziv kupca">
     </div>
 
     <!-- Supplier -->
     <div class="mb-3">
       <label for="supplier-oib" class="form-label fw-bold">Dobavljač</label>
-      <div class="input-group mb-2">
-        <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača" value="29756659895">
-        <button title="Pritisnuti za dohvaćanje naziva tvrtke" class="btn btn-outline-info" type="button" id="fetch-supplier">
-          📥
-        </button>
-      </div>
+      <input type="text" class="form-control mb-2" id="supplier-oib" placeholder="Unesite OIB dobavljača" value="29756659895">
       <input type="text" class="form-control" id="supplier-name" placeholder="Unesite naziv dobavljača">
     </div>
 
@@ -147,8 +137,6 @@
     // Buttons
     const addItem = document.getElementById("add-item");
     const removeItem = document.getElementById("remove-item");
-    const fetchBuyer = document.getElementById("fetch-buyer");
-    const fetchSupplier = document.getElementById("fetch-supplier");
     const showSavedData = document.getElementById("show-saved");
     const generateText = document.getElementById("generate-text");
     const generatePdf = document.getElementById("generate-pdf");
@@ -199,30 +187,6 @@
       } else {
         alert("Nema stavki za izbrisati.");
       }
-    });
-
-    // Function used for fetching data by oib
-    function fetchDataByOib(oib, destEl) {
-      return fetch(`/dohvati-podatke?oib=${oib}`)
-        .then(res => res.json())
-        .then(data => document.getElementById(destEl).value = data.name)
-        .catch(console.log)
-    }
-
-    // Fetch buyer by OIB (example)
-    fetchBuyer.addEventListener("click", function() {
-      const oib = document.getElementById("buyer-oib").value.trim();
-      if (!oib) { alert("Unesite OIB kupca."); return; }
-
-      fetchDataByOib(oib, "buyer-name");
-    });
-
-    // Fetch supplier by OIB (example)
-    fetchSupplier.addEventListener("click", function() {
-      const oib = document.getElementById("supplier-oib").value.trim();
-      if (!oib) { alert("Unesite OIB dobavljača."); return; }
-      
-      fetchDataByOib(oib, "supplier-name");
     });
 
     // Get form data
@@ -345,14 +309,14 @@
       cachedItems.sort();
 
       const formStr = !cachedForm ? 'Nema spremljenih podataka' : `
-      Spremljeni podaci:
-      - Broj narudžbenice: ${cachedForm.documentID}
-      - OIB kupca: ${cachedForm.buyerOIB}
-      - Naziv kupca: ${cachedForm.buyerName}
+Spremljeni podaci:
+- Broj narudžbenice: ${cachedForm.documentID}
+- OIB kupca: ${cachedForm.buyerOIB}
+- Naziv kupca: ${cachedForm.buyerName}
       `;
       const itemsStr = cachedItems.length < 1 ?
-        'Nema spremljenih stavki' : `
-        Spremljene stavke: ${cachedItems.join(', ')}
+        '\nNema spremljenih stavki' : `
+Spremljene stavke: ${cachedItems.join(', ')}
       `;
       alert(formStr + itemsStr);
     });
