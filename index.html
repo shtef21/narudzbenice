@@ -48,14 +48,16 @@
         />
       </label>
       <input type="text" class="form-control mb-2" id="buyer-oib" placeholder="Unesite OIB kupca" value="84214771175">
-      <input type="text" class="form-control" id="buyer-name" placeholder="Unesite naziv kupca">
+      <input type="text" class="form-control mb-2" id="buyer-name" placeholder="Unesite naziv kupca">
+      <input type="text" class="form-control" id="buyer-address" placeholder="Unesite adresu kupca">
     </div>
 
     <!-- Supplier -->
     <div class="mb-3">
       <label for="supplier-oib" class="form-label fw-bold">Dobavljač</label>
       <input type="text" class="form-control mb-2" id="supplier-oib" placeholder="Unesite OIB dobavljača" value="29756659895">
-      <input type="text" class="form-control" id="supplier-name" placeholder="Unesite naziv dobavljača">
+      <input type="text" class="form-control mb-2" id="supplier-name" placeholder="Unesite naziv dobavljača">
+      <input type="text" class="form-control" id="supplier-address" placeholder="Unesite adresu dobavljača">
     </div>
 
     <!-- Delivery -->
@@ -145,8 +147,10 @@
     const i_documentID = document.getElementById("doc-id");
     const i_buyerOIB = document.getElementById("buyer-oib");
     const i_buyerName = document.getElementById("buyer-name");
+    const i_buyerAddress = document.getElementById("buyer-address");
     const i_supplierOIB = document.getElementById("supplier-oib");
     const i_supplierName = document.getElementById("supplier-name");
+    const i_supplierAddress = document.getElementById("supplier-address");
     const i_delivery = document.getElementById("delivery");
 
     // Add new item row
@@ -195,8 +199,10 @@
       const documentID = i_documentID.value.trim();
       const buyerOIB = i_buyerOIB.value.trim();
       const buyerName = i_buyerName.value.trim();
+      const buyerAddress = i_buyerAddress.value.trim();
       const supplierOIB = i_supplierOIB.value.trim();
       const supplierName = i_supplierName.value.trim();
+      const supplierAddress = i_supplierAddress.value.trim();
       const deliveryType = i_delivery.value.trim();
 
       // Items
@@ -222,8 +228,10 @@
         documentID,
         buyerOIB,
         buyerName,
+        buyerAddress,
         supplierOIB,
         supplierName,
+        supplierAddress,
         deliveryType,
         items,
         grandTotal,
@@ -240,8 +248,14 @@
         return false;
       }
 
-      if (!formData.buyerOIB || !formData.buyerName || !formData.supplierOIB || !formData.supplierName) {
-        alert("Molimo unesite OIB i naziv kupca/dobavljača.");
+      if (!formData.buyerOIB
+        || !formData.buyerName
+        || !formData.buyerAddress
+        || !formData.supplierOIB
+        || !formData.supplierName
+        || !formData.supplierAddress
+      ) {
+        alert("Molimo unesite OIB, naziv i adresu kupca/dobavljača.");
         return false;
       }
       if (!formData.deliveryType) {
@@ -313,6 +327,7 @@ Spremljeni podaci:
 - Broj narudžbenice: ${cachedForm.documentID}
 - OIB kupca: ${cachedForm.buyerOIB}
 - Naziv kupca: ${cachedForm.buyerName}
+- Adresa kupca: ${cachedForm.buyerAddress}
       `;
       const itemsStr = cachedItems.length < 1 ?
         '\nNema spremljenih stavki' : `
@@ -331,7 +346,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
       }
 
       // Create output text
-      let orderText = `NARUDŽBENICA ${formData.documentID}\nKupac: ${formData.buyerName} (OIB: ${formData.buyerOIB})\nDobavljač: ${formData.supplierName} (OIB: ${formData.supplierOIB})\n\nSTAVKE:\n`;
+      let orderText = `NARUDŽBENICA ${formData.documentID}\nKupac: ${formData.buyerName} \n  (OIB: ${formData.buyerOIB}, Adresa: ${formData.buyerAddress})\nDobavljač: ${formData.supplierName} \n  (OIB: ${formData.supplierOIB}, Adresa: ${formData.supplierAddress})\n\nSTAVKE:\n`;
       for (let item of formData.items) {
         orderText += `- ${item.name} | ${item.quantity} kom | ${item.price.toFixed(2)} EUR | ${item.pdv.toFixed(2)}% PDV | Ukupno: ${item.total.toFixed(2)} EUR (${item.totalPdv.toFixed(2)} EUR PDV)\n`;
       }
@@ -359,10 +374,12 @@ Spremljene stavke: ${cachedItems.join(', ')}
           { text: 'Kupac', style: 'header' },
           { text: 'OIB: ' + formData.buyerOIB },
           { text: 'Naziv: ' + formData.buyerName },
+          { text: 'Adresa: ' + formData.buyerAddress },
           { text: '\n' },
           { text: 'Dobavljač', style: 'header' },
           { text: 'OIB: ' + formData.supplierOIB },
           { text: 'Naziv: ' + formData.supplierName },
+          { text: 'Adresa: ' + formData.supplierAddress },
           { text: '\n' },
           { text: 'Dostava: ' + formData.deliveryType + '\nBroj stavki: ' + formData.items.length + '\nUkupni iznos PDVa (EUR): ' + formData.grandTotalPdv.toFixed(2) + '\nUkupna cijena (EUR): ' + formData.grandTotal.toFixed(2) },
           { text: 'Stavke:', style: 'subheader' },
@@ -430,6 +447,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
         i_documentID.value = parseInt(cachedForm.documentID) + 1;
         i_buyerOIB.value = cachedForm.buyerOIB;
         i_buyerName.value = cachedForm.buyerName;
+        i_buyerAddress.value = cachedForm.buyerAddress;
       }
     }
     setupDocument();
