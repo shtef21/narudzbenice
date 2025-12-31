@@ -49,7 +49,7 @@
       </label>
       <div class="input-group mb-2">
         <input type="text" class="form-control" id="buyer-oib" placeholder="Unesite OIB kupca" value="84214771175">
-        <button class="btn btn-outline-info" type="button" id="fetch-buyer">
+        <button title="Pritisnuti za dohvaćanje naziva tvrtke" class="btn btn-outline-info" type="button" id="fetch-buyer">
           📥
         </button>
       </div>
@@ -61,7 +61,7 @@
       <label for="supplier-oib" class="form-label fw-bold">Dobavljač</label>
       <div class="input-group mb-2">
         <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača" value="29756659895">
-        <button class="btn btn-outline-info" type="button" id="fetch-supplier">
+        <button title="Pritisnuti za dohvaćanje naziva tvrtke" class="btn btn-outline-info" type="button" id="fetch-supplier">
           📥
         </button>
       </div>
@@ -90,8 +90,11 @@
     <div class="d-flex gap-2 mb-3">
       <button type="button" id="add-item" class="btn btn-primary">Dodaj stavku</button>
       <button type="button" id="remove-item" class="btn btn-danger">Ukloni posljednju stavku</button>
-      <button type="button" id="generate-text" class="btn btn-success">Generiraj tekst</button>
-      <button type="button" id="generate-pdf" class="btn btn-success">Generiraj PDF</button>
+      <button type="button" id="show-saved" class="btn btn-warning">Prikaži spremljene podatke</button>
+    </div>
+    <div class="d-flex gap-2 mb-3">
+      <button type="button" id="generate-text" class="btn btn-success w-100">Generiraj tekst</button>
+      <button type="button" id="generate-pdf" class="btn btn-success w-100">Generiraj PDF</button>
     </div>
 
     <pre id="output" class="p-3 border bg-light rounded"></pre>
@@ -146,6 +149,7 @@
     const removeItem = document.getElementById("remove-item");
     const fetchBuyer = document.getElementById("fetch-buyer");
     const fetchSupplier = document.getElementById("fetch-supplier");
+    const showSavedData = document.getElementById("show-saved");
     const generateText = document.getElementById("generate-text");
     const generatePdf = document.getElementById("generate-pdf");
 
@@ -299,12 +303,15 @@
         localStorage.setItem(key, JSON.stringify(data));
       }
       else if (key === itemsCacheKey) {
-        let prevItems = (loadFromCache(itemsCacheKey) || []).filter(item => !data.find(i => i.name === item.name));
+        let prevItems = loadFromCache(itemsCacheKey) || [];
         const lowercasedItems = [...prevItems, ...data].map(item => ({
           ...item,
           name: item.name.toLowerCase(),
         }));
-        const itemsJson = JSON.stringify(lowercasedItems);
+        const uniqueItems = lowercasedItems.filter(
+          (item, index) => lowercasedItems.findIndex(i => i.name === item.name) === index
+        );
+        const itemsJson = JSON.stringify(uniqueItems);
         localStorage.setItem(key, itemsJson);
       }
     }
@@ -331,6 +338,25 @@
       })
     }
 
+    // Show saved data
+    showSavedData.addEventListener("click", function() {
+      const cachedForm = loadFromCache(formCacheKey);
+      const cachedItems = (loadFromCache(itemsCacheKey) || []).map(item => item.name);
+      cachedItems.sort();
+
+      const formStr = !cachedForm ? 'Nema spremljenih podataka' : `
+      Spremljeni podaci:
+      - Broj narudžbenice: ${cachedForm.documentID}
+      - OIB kupca: ${cachedForm.buyerOIB}
+      - Naziv kupca: ${cachedForm.buyerName}
+      `;
+      const itemsStr = cachedItems.length < 1 ?
+        'Nema spremljenih stavki' : `
+        Spremljene stavke: ${cachedItems.join(', ')}
+      `;
+      alert(formStr + itemsStr);
+    });
+
     // Generate text
     generateText.addEventListener("click", function() {
       const formData = getFormData();
@@ -355,7 +381,7 @@
     });
 
     // Generate PDF
-    generatePdf.addEventListener("click", () => {
+    generatePdf.addEventListener("click", function() {
       const formData = getFormData();
 
       if (validateFormData(formData) === false) {
@@ -379,14 +405,15 @@
           {
             table: {
               headerRows: 1,
-              widths: ['*', 'auto', 'auto', 'auto', 'auto'],
+              widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto'],
               body: [
                 [
                   { text: 'Naziv', bold: true, wrap: true },
-                  { text: 'Količina', bold: true },
-                  { text: 'Cijena (EUR)', bold: true },
+                  { text: 'Kol.', bold: true },
+                  { text: 'Cijena (€)', bold: true },
                   { text: 'PDV (%)', bold: true },
-                  { text: 'Ukupno (EUR)', bold: true }
+                  { text: 'Uk. PDV (€)', bold: true },
+                  { text: 'Ukupno (€)', bold: true }
                 ],
                 ...formData.items.map((item) => 
                   [
@@ -394,6 +421,7 @@
                     item.quantity,
                     item.price.toFixed(2),
                     item.pdv.toFixed(2),
+                    item.totalPdv.toFixed(2),
                     item.total.toFixed(2)
                   ]
                 )
