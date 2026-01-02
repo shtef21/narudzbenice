@@ -33,7 +33,7 @@
           style="height: 1.5rem;"
         />
       </label>
-      <input type="number" class="form-control" id="doc-id" placeholder="Unesite broj narudžbenice">
+      <input type="number" class="form-control" id="doc-id" placeholder="Unesite broj narudžbenice" value="1">
     </div>
 
     <!-- Buyer -->
@@ -47,7 +47,7 @@
           style="height: 1.5rem;"
         />
       </label>
-      <input type="text" class="form-control mb-2" id="buyer-oib" placeholder="Unesite OIB kupca" value="84214771175">
+      <input type="text" class="form-control mb-2" id="buyer-oib" placeholder="Unesite OIB kupca">
       <input type="text" class="form-control mb-2" id="buyer-name" placeholder="Unesite naziv kupca">
       <input type="text" class="form-control" id="buyer-address" placeholder="Unesite adresu kupca">
     </div>
@@ -55,13 +55,27 @@
     <!-- Supplier -->
     <div class="mb-3">
       <label for="supplier-oib" class="form-label fw-bold">Dobavljač</label>
-      <input type="text" class="form-control mb-2" id="supplier-oib" placeholder="Unesite OIB dobavljača" value="29756659895">
+      <input type="text" class="form-control mb-2" id="supplier-oib" placeholder="Unesite OIB dobavljača">
       <input type="text" class="form-control mb-2" id="supplier-name" placeholder="Unesite naziv dobavljača">
       <input type="text" class="form-control" id="supplier-address" placeholder="Unesite adresu dobavljača">
     </div>
 
-    <!-- Delivery -->
+    <!-- Urudžbeni broj -->
     <div class="mb-4">
+      <label for="ur-broj" class="form-label fw-bold">
+        Urudžbeni broj
+        <img
+          src="./info.svg" 
+          title="Automatski se generira promjenom broja narudžbenice"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
+      <input type="text" class="form-control" id="ur-broj" placeholder="Unesite broj narudžbenice" disabled>
+    </div>
+
+    <!-- Delivery -->
+    <div class="mb-3">
       <label for="delivery" class="form-label fw-bold">
         Dostava
         <img
@@ -151,6 +165,7 @@
     const i_supplierOIB = document.getElementById("supplier-oib");
     const i_supplierName = document.getElementById("supplier-name");
     const i_supplierAddress = document.getElementById("supplier-address");
+    const i_urBroj = document.getElementById("ur-broj");
     const i_delivery = document.getElementById("delivery");
 
     // Add new item row
@@ -203,6 +218,7 @@
       const supplierOIB = i_supplierOIB.value.trim();
       const supplierName = i_supplierName.value.trim();
       const supplierAddress = i_supplierAddress.value.trim();
+      const urBroj = i_urBroj.value.trim();
       const deliveryType = i_delivery.value.trim();
 
       // Items
@@ -232,6 +248,7 @@
         supplierOIB,
         supplierName,
         supplierAddress,
+        urBroj,
         deliveryType,
         items,
         grandTotal,
@@ -316,6 +333,15 @@
       })
     }
 
+    // Handle Ur. broj
+    function handleUrBroj() {
+      const docId = i_documentID.value.trim();
+      const now = new Date();
+      const newUrBroj = !docId ? '' : `${docId}-${now.getMonth() + 1}-${now.getFullYear()}`;
+      i_urBroj.value = newUrBroj;
+    }
+    i_documentID.addEventListener("input", handleUrBroj);
+
     // Show saved data
     showSavedData.addEventListener("click", function() {
       const cachedForm = loadFromCache(formCacheKey);
@@ -346,13 +372,21 @@ Spremljene stavke: ${cachedItems.join(', ')}
       }
 
       // Create output text
-      let orderText = `NARUDŽBENICA ${formData.documentID}\nKupac: ${formData.buyerName} \n  (OIB: ${formData.buyerOIB}, Adresa: ${formData.buyerAddress})\nDobavljač: ${formData.supplierName} \n  (OIB: ${formData.supplierOIB}, Adresa: ${formData.supplierAddress})\n\nSTAVKE:\n`;
+      let orderText = `NARUDŽBENICA ${formData.documentID}`;
+      orderText += `\nKupac: ${formData.buyerName}`;
+      orderText += `\n  (OIB: ${formData.buyerOIB}, Adresa: ${formData.buyerAddress})`;
+      orderText += `\nDobavljač: ${formData.supplierName}`;
+      orderText += `\n  (OIB: ${formData.supplierOIB}, Adresa: ${formData.supplierAddress})`;
+      orderText += `\n  (OIB: ${formData.supplierOIB}, Adresa: ${formData.supplierAddress})\n\nSTAVKE:`;
+
       for (let item of formData.items) {
-        orderText += `- ${item.name} | ${item.quantity} kom | ${item.price.toFixed(2)} EUR | ${item.pdv.toFixed(2)}% PDV | Ukupno: ${item.total.toFixed(2)} EUR (${item.totalPdv.toFixed(2)} EUR PDV)\n`;
+        orderText += `\n- ${item.name} | ${item.quantity} kom | ${item.price.toFixed(2)} €/kom | ${item.pdv.toFixed(2)}% PDV | Ukupno: €${item.total.toFixed(2)} (€${item.totalPdv.toFixed(2)} PDV)`;
       }
+      orderText += `\n\nUrudžbeni broj: ${formData.urBroj}`;
       orderText += `\nDostava: ${formData.deliveryType}`;
       orderText += `\nIznos PDVa: ${formData.grandTotalPdv.toFixed(2)} EUR`;
-      orderText += `\nUKUPNO ZA PLATITI: ${formData.grandTotal.toFixed(2)} EUR\nDatum: ${formData.createdStr}`;
+      orderText += `\nUKUPNO ZA PLATITI: ${formData.grandTotal.toFixed(2)} EUR`;
+      orderText += `\n\nDatum: ${formData.createdStr}`;
 
       document.getElementById("output").textContent = orderText;
       saveToCache(formCacheKey, formData);
@@ -381,7 +415,13 @@ Spremljene stavke: ${cachedItems.join(', ')}
           { text: 'Naziv: ' + formData.supplierName },
           { text: 'Adresa: ' + formData.supplierAddress },
           { text: '\n' },
-          { text: 'Dostava: ' + formData.deliveryType + '\nBroj stavki: ' + formData.items.length + '\nUkupni iznos PDVa (EUR): ' + formData.grandTotalPdv.toFixed(2) + '\nUkupna cijena (EUR): ' + formData.grandTotal.toFixed(2) },
+          { text: 'Podaci', style: 'header' },
+          { text: 'Urudžbeni broj: ' + formData.urBroj +
+                  '\nDostava: ' + formData.deliveryType +
+                  '\nBroj stavki: ' + formData.items.length +
+                  '\n\nUkupni PDV: €' + formData.grandTotalPdv.toFixed(2) +
+                  '\nUkupna cijena: €' + formData.grandTotal.toFixed(2)
+          },
           { text: 'Stavke:', style: 'subheader' },
           {
             table: {
@@ -430,7 +470,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
         }
       };
 
-      pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.documentID + '.pdf');
+      pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.urBroj + '.pdf');
       saveToCache(formCacheKey, formData);
       saveToCache(itemsCacheKey, formData.items);
     })
@@ -449,6 +489,9 @@ Spremljene stavke: ${cachedItems.join(', ')}
         i_buyerName.value = cachedForm.buyerName;
         i_buyerAddress.value = cachedForm.buyerAddress;
       }
+
+      // Now set ur. broj
+      handleUrBroj();
     }
     setupDocument();
 
