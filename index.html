@@ -145,12 +145,12 @@
       <input id="stavka-qty-BROJ_STAVKE" type="number" class="form-control item-qty" placeholder="Unesite količinu">
     </div>
     <div class="mb-2">
-      <label class="form-label">PDV (%)</label>
-      <input id="stavka-pdv-BROJ_STAVKE" type="number" class="form-control item-pdv" placeholder="Unesite iznos PDVa">
+      <label class="form-label">Cijena bez PDVa (€)</label>
+      <input id="stavka-price-BROJ_STAVKE" type="number" class="form-control item-price" step="0.01" placeholder="Unesite cijenu">
     </div>
     <div>
-      <label class="form-label">Jedinična cijena (€)</label>
-      <input id="stavka-price-BROJ_STAVKE" type="number" class="form-control item-price" step="0.01" placeholder="Unesite cijenu">
+      <label class="form-label">PDV (%)</label>
+      <input id="stavka-pdv-BROJ_STAVKE" type="number" class="form-control item-pdv" placeholder="Unesite iznos PDVa">
     </div>
   </template>
 
@@ -250,15 +250,34 @@
         const quantity = parseFloat(qtys[idx].value);
         const pdv = parseFloat(pdvs[idx].value);
         const price = parseFloat(prices[idx].value);
-        const pricePdv = price * (pdv / 100);
-        const total = quantity * price;
-        const totalPdv = quantity * pricePdv;
-        return { name, quantity, pdv, price, pricePdv, total, totalPdv };
+        debugger;
+        const pricePdv = price * (1 + pdv / 100);
+        const totalWithoutPdv = quantity * price;
+        const totalPlusPdv = quantity * pricePdv;
+        console.log({
+          name,
+          quantity,
+          pdv,
+          price,
+          pricePdv,
+          totalWithoutPdv,
+          totalPlusPdv
+        })
+        return {
+          name,
+          quantity,
+          pdv,
+          price,
+          pricePdv,
+          totalWithoutPdv,
+          totalPlusPdv
+        };
       }).filter((item) => item.name || item.quantity || item.price || item.total);
 
       // Computed values
-      const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
-      const grandTotalPdv = items.reduce((sum, item) => sum + item.totalPdv, 0);
+      const grandTotalWithoutPdv = items.reduce((sum, item) => sum + item.totalWithoutPdv, 0);
+      const grandTotalPlusPdv = items.reduce((sum, item) => sum + item.totalPlusPdv, 0);
+      const totalPdvAmount = grandTotalPlusPdv - grandTotalWithoutPdv;
       return {
         documentID,
         buyerOIB,
@@ -272,8 +291,9 @@
         documentClass,
         deliveryType,
         items,
-        grandTotal,
-        grandTotalPdv,
+        grandTotalWithoutPdv,
+        grandTotalPlusPdv,
+        totalPdvAmount,
         created: new Date(),
         createdStr: new Date().toLocaleDateString("hr-HR").replaceAll(' ', ''),
       };
@@ -387,20 +407,29 @@ Spremljene stavke: ${cachedItems.join(', ')}
 
       // Create output text
       let orderText = `NARUDŽBENICA ${formData.documentID}/${formData.documentClass}`;
-      orderText += `\n\nKupac: (OIB: ${formData.buyerOIB}) ${formData.buyerName}`;
-      orderText += `\n  (E-mail: ${formData.buyerEmail}, Adresa: ${formData.buyerAddress})`;
+      orderText += `\n\nKupac: ${formData.buyerName}`;
+      orderText += `\n  OIB: ${formData.buyerOIB}`;
+      orderText += `\n  Adresa: ${formData.buyerAddress}`;
+      orderText += `\n  E-mail: ${formData.buyerEmail}`;
       orderText += `\nDobavljač: ${formData.supplierName}`;
-      orderText += `\n  (OIB: ${formData.supplierOIB}, Adresa: ${formData.supplierAddress})`;
+      orderText += `\n  OIB: ${formData.supplierOIB}`;
+      orderText += `\n  Adresa: ${formData.supplierAddress}`;
       orderText += `\n\nSTAVKE:`;
 
       for (let item of formData.items) {
-        orderText += `\n- ${item.name} | ${item.quantity} kom | ${item.price.toFixed(2)} €/kom | ${item.pdv.toFixed(2)}% PDV | Ukupno: €${item.total.toFixed(2)} (€${item.totalPdv.toFixed(2)} PDV)`;
+        orderText += `\n- ${item.name}`
+          + ` | €${item.price.toFixed(2)}/kom.`
+          + ` | ${item.quantity} kom.`
+          + ` | ${item.pdv.toFixed(2)}% PDV`
+          + ` | Uk. (bez PDVa): €${item.totalWithoutPdv.toFixed(2)}`
+          + ` | Ukupno s PDVom: €${item.totalPlusPdv.toFixed(2)}`;
       }
       orderText += `\n\nUrudžbeni broj: ${formData.urBroj}`;
       orderText += `\nKlasa: ${formData.documentClass}`;
       orderText += `\nDostava: ${formData.deliveryType}`;
-      orderText += `\nUkupni PDV: €${formData.grandTotalPdv.toFixed(2)}`;
-      orderText += `\nUKUPNO ZA PLATITI: €${formData.grandTotal.toFixed(2)}`;
+      orderText += `\n\nUkupni iznos bez PDVa: €${formData.grandTotalWithoutPdv.toFixed(2)}`;
+      orderText += `\nUkupni PDV: €${formData.totalPdvAmount.toFixed(2)}`;
+      orderText += `\nUKUPNO ZA PLATITI: €${formData.grandTotalPlusPdv.toFixed(2)}`;
       orderText += `\n\nDatum: ${formData.createdStr}`;
 
       document.getElementById("output").textContent = orderText;
@@ -439,8 +468,9 @@ Spremljene stavke: ${cachedItems.join(', ')}
                   '\nKlasa: ' + formData.documentClass +
                   '\nDostava: ' + formData.deliveryType +
                   '\n\nBroj stavki: ' + formData.items.length +
-                  '\nUkupni PDV: €' + formData.grandTotalPdv.toFixed(2) +
-                  '\nUkupna cijena: €' + formData.grandTotal.toFixed(2)
+                  '\nUkupni bez PDVa: €' + formData.grandTotalWithoutPdv.toFixed(2) +
+                  '\nIznos PDVa: €' + formData.totalPdvAmount.toFixed(2) +
+                  '\nUkupna cijena: €' + formData.grandTotalPlusPdv.toFixed(2)
           },
           { text: 'Stavke:', style: 'subheader' },
           {
@@ -450,11 +480,11 @@ Spremljene stavke: ${cachedItems.join(', ')}
               body: [
                 [
                   { text: 'Naziv', bold: true, wrap: true },
-                  { text: 'Cijena (€)', bold: true },
+                  { text: 'Cijena bez \nPDVa (€)', bold: true },
                   { text: 'Kol.', bold: true },
                   { text: 'PDV (%)', bold: true },
-                  { text: 'Uk. PDV (€)', bold: true },
-                  { text: 'Ukupno (€)', bold: true }
+                  { text: 'Ukupno bez \nPDVa (€)', bold: true },
+                  { text: 'Ukupno s \nPDVom (€)', bold: true }
                 ],
                 ...formData.items.map((item) => 
                   [
@@ -462,8 +492,8 @@ Spremljene stavke: ${cachedItems.join(', ')}
                     item.price.toFixed(2),
                     item.quantity,
                     item.pdv.toFixed(2),
-                    item.totalPdv.toFixed(2),
-                    item.total.toFixed(2)
+                    item.totalWithoutPdv.toFixed(2),
+                    item.totalPlusPdv.toFixed(2)
                   ]
                 )
               ]
@@ -504,7 +534,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
       // Set document ID
       const cachedDocId = loadFromCache(docIdCacheKey);
       if (cachedDocId) {
-        i_documentID.value = parseInt(cachedDocId.documentID) + 1;
+        i_documentID.value = parseInt(cachedDocId) + 1;
       }
 
       // Now set ur. broj and doc class
