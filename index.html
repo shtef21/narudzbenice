@@ -39,7 +39,7 @@
     <!-- Buyer -->
     <div class="mb-3">
       <label for="buyer-oib" class="form-label fw-bold">
-        Kupac (OIB, naziv, adresa i mail)
+        Naručitelj (OIB, naziv, adresa i mail)
         <img
           src="./info.svg" 
           title="Podaci o kupcu automatski se popunjavaju"
@@ -157,6 +157,7 @@
   <script src="./bootstrap.js"></script>
   <script src="./pdfmake.min.js"></script>
   <script src="./vfs_fonts.js"></script>
+  <script src="./base64images.js"></script>
   <script>
     // Control fields
     const templateStavka = document.getElementById('template-stavka');
@@ -407,7 +408,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
 
       // Create output text
       let orderText = `NARUDŽBENICA ${formData.documentID}/${formData.documentClass}`;
-      orderText += `\n\nKupac: ${formData.buyerName}`;
+      orderText += `\n\nNaručitelj: ${formData.buyerName}`;
       orderText += `\n  OIB: ${formData.buyerOIB}`;
       orderText += `\n  Adresa: ${formData.buyerAddress}`;
       orderText += `\n  E-mail: ${formData.buyerEmail}`;
@@ -449,10 +450,16 @@ Spremljene stavke: ${cachedItems.join(', ')}
       const docDefinition = {
         content: [
           {
+            image: 'logotip',
+            // width: 310,
+            width: 250,
+            absolutePosition: { x: 325, y: 70 }
+          },
+          {
             text: 'Narudžbenica br. ' + formData.documentID + '/' + formData.documentClass,
             style: 'mainHeader', alignment: 'center'
           },
-          { text: 'Kupac', style: 'header' },
+          { text: 'Naručitelj', style: 'header' },
           { text: 'OIB: ' + formData.buyerOIB },
           { text: 'Naziv: ' + formData.buyerName },
           { text: 'Adresa: ' + formData.buyerAddress },
@@ -468,7 +475,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
                   '\nKlasa: ' + formData.documentClass +
                   '\nDostava: ' + formData.deliveryType +
                   '\n\nBroj stavki: ' + formData.items.length +
-                  '\nUkupni bez PDVa: €' + formData.grandTotalWithoutPdv.toFixed(2) +
+                  '\nUkupno bez PDVa: €' + formData.grandTotalWithoutPdv.toFixed(2) +
                   '\nIznos PDVa: €' + formData.totalPdvAmount.toFixed(2) +
                   '\nUkupna cijena: €' + formData.grandTotalPlusPdv.toFixed(2)
           },
@@ -501,6 +508,9 @@ Spremljene stavke: ${cachedItems.join(', ')}
           },
           { text: '\n Generirano ' + formData.createdStr }
         ],
+        images: {
+          logotip: logotipBase64,
+        },
         styles: {
           mainHeader: {
             fontSize: 22,
