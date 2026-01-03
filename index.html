@@ -39,17 +39,18 @@
     <!-- Buyer -->
     <div class="mb-3">
       <label for="buyer-oib" class="form-label fw-bold">
-        Kupac
+        Kupac (OIB, naziv, adresa i mail)
         <img
           src="./info.svg" 
-          title="Podaci o kupcu automatski se popunjavaju nakon prvog generiranja narudžbenice"
+          title="Podaci o kupcu automatski se popunjavaju"
           alt="info"
           style="height: 1.5rem;"
         />
       </label>
-      <input type="text" class="form-control mb-2" id="buyer-oib" placeholder="Unesite OIB kupca">
-      <input type="text" class="form-control mb-2" id="buyer-name" placeholder="Unesite naziv kupca">
-      <input type="text" class="form-control" id="buyer-address" placeholder="Unesite adresu kupca">
+      <input type="text" class="form-control mb-2" id="buyer-oib" value="83507857596" disabled>
+      <input type="text" class="form-control mb-2" id="buyer-name" value="Općina Karojba" disabled>
+      <input type="text" class="form-control mb-2" id="buyer-address" value="Karojba 1, 52424 Motovun" disabled>
+      <input type="text" class="form-control" id="buyer-mail" value="opcina@karojba.hr" disabled>
     </div>
 
     <!-- Supplier -->
@@ -148,7 +149,7 @@
       <input id="stavka-pdv-BROJ_STAVKE" type="number" class="form-control item-pdv" placeholder="Unesite iznos PDVa">
     </div>
     <div>
-      <label class="form-label">Jedinična cijena (EUR)</label>
+      <label class="form-label">Jedinična cijena (€)</label>
       <input id="stavka-price-BROJ_STAVKE" type="number" class="form-control item-price" step="0.01" placeholder="Unesite cijenu">
     </div>
   </template>
@@ -159,7 +160,7 @@
   <script>
     // Control fields
     const templateStavka = document.getElementById('template-stavka');
-    const formCacheKey = 'podaci-narudzbenice';
+    const docIdCacheKey = 'podaci-broj-narudzbenice';
     const itemsCacheKey = 'podaci-narudzbenice-stavke';
     const itemsContainer = document.getElementById("items-container");
     let itemCounter = 1;
@@ -176,6 +177,7 @@
     const i_buyerOIB = document.getElementById("buyer-oib");
     const i_buyerName = document.getElementById("buyer-name");
     const i_buyerAddress = document.getElementById("buyer-address");
+    const i_buyerEmail = document.getElementById("buyer-mail");
     const i_supplierOIB = document.getElementById("supplier-oib");
     const i_supplierName = document.getElementById("supplier-name");
     const i_supplierAddress = document.getElementById("supplier-address");
@@ -230,6 +232,7 @@
       const buyerOIB = i_buyerOIB.value.trim();
       const buyerName = i_buyerName.value.trim();
       const buyerAddress = i_buyerAddress.value.trim();
+      const buyerEmail = i_buyerEmail.value.trim();
       const supplierOIB = i_supplierOIB.value.trim();
       const supplierName = i_supplierName.value.trim();
       const supplierAddress = i_supplierAddress.value.trim();
@@ -261,6 +264,7 @@
         buyerOIB,
         buyerName,
         buyerAddress,
+        buyerEmail,
         supplierOIB,
         supplierName,
         supplierAddress,
@@ -282,14 +286,11 @@
         return false;
       }
 
-      if (!formData.buyerOIB
-        || !formData.buyerName
-        || !formData.buyerAddress
-        || !formData.supplierOIB
+      if (!formData.supplierOIB
         || !formData.supplierName
         || !formData.supplierAddress
       ) {
-        alert("Molimo unesite OIB, naziv i adresu kupca/dobavljača.");
+        alert("Molimo unesite OIB, naziv i adresu dobavljača.");
         return false;
       }
       if (!formData.deliveryType) {
@@ -311,7 +312,7 @@
 
     // Save data to cache
     function saveToCache(key, data) {
-      if (key === formCacheKey) {
+      if (key === docIdCacheKey) {
         localStorage.setItem(key, JSON.stringify(data));
       }
       else if (key === itemsCacheKey) {
@@ -361,16 +362,12 @@
 
     // Show saved data
     showSavedData.addEventListener("click", function() {
-      const cachedForm = loadFromCache(formCacheKey);
+      const cachedDocId = loadFromCache(docIdCacheKey);
       const cachedItems = (loadFromCache(itemsCacheKey) || []).map(item => item.name);
       cachedItems.sort();
 
-      const formStr = !cachedForm ? 'Nema spremljenih podataka' : `
-Spremljeni podaci:
-- Broj narudžbenice: ${cachedForm.documentID}
-- OIB kupca: ${cachedForm.buyerOIB}
-- Naziv kupca: ${cachedForm.buyerName}
-- Adresa kupca: ${cachedForm.buyerAddress}
+      const formStr = !cachedDocId ? 'Nema spremljenog broja narudžbenice' : `
+Broj prethodno generirane narudžbenice: ${cachedDocId}
       `;
       const itemsStr = cachedItems.length < 1 ?
         '\nNema spremljenih stavki' : `
@@ -390,8 +387,8 @@ Spremljene stavke: ${cachedItems.join(', ')}
 
       // Create output text
       let orderText = `NARUDŽBENICA ${formData.documentID}/${formData.documentClass}`;
-      orderText += `\n\nKupac: ${formData.buyerName}`;
-      orderText += `\n  (OIB: ${formData.buyerOIB}, Adresa: ${formData.buyerAddress})`;
+      orderText += `\n\nKupac: (OIB: ${formData.buyerOIB}) ${formData.buyerName}`;
+      orderText += `\n  (E-mail: ${formData.buyerEmail}, Adresa: ${formData.buyerAddress})`;
       orderText += `\nDobavljač: ${formData.supplierName}`;
       orderText += `\n  (OIB: ${formData.supplierOIB}, Adresa: ${formData.supplierAddress})`;
       orderText += `\n\nSTAVKE:`;
@@ -407,7 +404,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
       orderText += `\n\nDatum: ${formData.createdStr}`;
 
       document.getElementById("output").textContent = orderText;
-      saveToCache(formCacheKey, formData);
+      saveToCache(docIdCacheKey, formData.documentID);
       saveToCache(itemsCacheKey, formData.items);
     });
 
@@ -430,6 +427,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
           { text: 'OIB: ' + formData.buyerOIB },
           { text: 'Naziv: ' + formData.buyerName },
           { text: 'Adresa: ' + formData.buyerAddress },
+          { text: 'E-mail: ' + formData.buyerEmail },
           { text: '\n' },
           { text: 'Dobavljač', style: 'header' },
           { text: 'OIB: ' + formData.supplierOIB },
@@ -493,7 +491,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
       };
 
       pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.urBroj + '.pdf');
-      saveToCache(formCacheKey, formData);
+      saveToCache(docIdCacheKey, formData.documentID);
       saveToCache(itemsCacheKey, formData.items);
     })
 
@@ -504,12 +502,9 @@ Spremljene stavke: ${cachedItems.join(', ')}
       addItem.click();
 
       // Set document ID
-      const cachedForm = loadFromCache(formCacheKey);
-      if (cachedForm) {
-        i_documentID.value = parseInt(cachedForm.documentID) + 1;
-        i_buyerOIB.value = cachedForm.buyerOIB;
-        i_buyerName.value = cachedForm.buyerName;
-        i_buyerAddress.value = cachedForm.buyerAddress;
+      const cachedDocId = loadFromCache(docIdCacheKey);
+      if (cachedDocId) {
+        i_documentID.value = parseInt(cachedDocId.documentID) + 1;
       }
 
       // Now set ur. broj and doc class
