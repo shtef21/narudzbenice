@@ -100,7 +100,13 @@
           style="height: 1.5rem;"
         />
       </label>
-      <input type="text" class="form-control" id="delivery" placeholder="Unesite tip dostave">
+      <select id="delivery" class="form-select">
+        <option value="" selected>-- Unesite tip dostave --</option>
+        <option value="Paketna dostava">Paketna dostava</option>
+        <option value="Prijevoz isporučitelja">Prijevoz isporučitelja</option>
+        <option value="Prijevoz naručitelja">Prijevoz naručitelja</option>
+        <option value="Ostalo">Ostalo</option>
+      </select>
     </div>
 
     <!-- Items container -->
@@ -451,7 +457,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
             image: 'logotip',
             // width: 310,
             width: 250,
-            absolutePosition: { x: 325, y: 25 }
+            absolutePosition: { x: 325, y: 20 }
           },
           {
             text: 'Narudžbenica br. ' + formData.documentID + '/' + formData.documentClass,
