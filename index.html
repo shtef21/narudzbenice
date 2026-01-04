@@ -112,9 +112,9 @@
       <button type="button" id="add-item" class="btn btn-primary">Dodaj stavku</button>
       <button type="button" id="remove-item" class="btn btn-danger">Ukloni posljednju stavku</button>
       <button type="button" id="show-saved" class="btn btn-warning">Prikaži spremljene podatke</button>
+      <button type="button" id="generate-text" class="btn btn-success">Prikaži tekst</button>
     </div>
     <div class="d-flex gap-2 mb-3">
-      <button type="button" id="generate-text" class="btn btn-success w-100">Generiraj tekst</button>
       <button type="button" id="generate-pdf" class="btn btn-success w-100">Generiraj PDF</button>
     </div>
 
@@ -434,8 +434,6 @@ Spremljene stavke: ${cachedItems.join(', ')}
       orderText += `\n\nDatum: ${formData.createdStr}`;
 
       document.getElementById("output").textContent = orderText;
-      saveToCache(docIdCacheKey, formData.documentID);
-      saveToCache(itemsCacheKey, formData.items);
     });
 
     // Generate PDF
