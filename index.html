@@ -4,19 +4,6 @@
   <meta charset="UTF-8">
   <title>Narudžbenice</title>
   <link href="./bootstrap.css" rel="stylesheet">
-
-  <!-- TODO - delete when development over -->
-  <script>
-    let prevHtml = null;
-    setInterval(async () => {
-      const html = await fetch(location.href).then(res => res.text());
-      if (prevHtml !== null && html !== prevHtml) {
-        location.reload();
-      } else {
-        prevHtml = html;
-      }
-    }, 1000);
-  </script>
 </head>
 <body class="bg-light">
   <main class="container my-4 p-4 bg-white rounded shadow-sm">
@@ -93,12 +80,6 @@
     <div class="mb-3">
       <label for="delivery" class="form-label fw-bold">
         Dostava
-        <img
-          src="./info.svg" 
-          title="Može biti: paketna dostava, prijevoz isporučitelja, prijevoz naručitelja, ostalo"
-          alt="info"
-          style="height: 1.5rem;"
-        />
       </label>
       <select id="delivery" class="form-select">
         <option value="" selected>-- Unesite tip dostave --</option>
