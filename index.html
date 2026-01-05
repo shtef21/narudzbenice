@@ -43,7 +43,12 @@
     <!-- Supplier -->
     <div class="mb-3">
       <label for="supplier-oib" class="form-label fw-bold">Dobavljač</label>
-      <input type="text" class="form-control mb-2" id="supplier-oib" placeholder="Unesite OIB dobavljača">
+      <div class="input-group mb-2">
+        <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača">
+        <button id="supplier-onclick" class="d-none btn btn-outline-info" type="button" title="Pritisnite za popunjavanje naziva i adrese dobavljača" onclick="loadSupplierFromCache()">
+          📥
+        </button>
+      </div>
       <input type="text" class="form-control mb-2" id="supplier-name" placeholder="Unesite naziv dobavljača">
       <input type="text" class="form-control" id="supplier-address" placeholder="Unesite adresu dobavljača">
     </div>
@@ -149,6 +154,7 @@
     // Control fields
     const templateStavka = document.getElementById('template-stavka');
     const docIdCacheKey = 'podaci-broj-narudzbenice';
+    const suppliersCacheKey = 'podaci-narudzbenice-dobavljaci';
     const itemsCacheKey = 'podaci-narudzbenice-stavke';
     const itemsContainer = document.getElementById("items-container");
     let itemCounter = 1;
@@ -169,6 +175,7 @@
     const i_supplierOIB = document.getElementById("supplier-oib");
     const i_supplierName = document.getElementById("supplier-name");
     const i_supplierAddress = document.getElementById("supplier-address");
+    const i_supplierSave = document.getElementById("supplier-onclick");
     const i_urBroj = document.getElementById("ur-broj");
     const i_documentClass = document.getElementById("doc-class");
     const i_delivery = document.getElementById("delivery");
@@ -323,6 +330,20 @@
       if (key === docIdCacheKey) {
         localStorage.setItem(key, JSON.stringify(data));
       }
+      else if (key === suppliersCacheKey) {
+        const newSupplier = {
+          supplierOIB: data.supplierOIB,
+          supplierName: data.supplierName,
+          supplierAddress: data.supplierAddress,
+        };
+        let prevSuppliers = loadFromCache(suppliersCacheKey) || [];
+        prevSuppliers.push(newSupplier);
+        const uniqueSuppliers = prevSuppliers.filter(
+          (supp, index) => index === prevSuppliers.findIndex(s => s.supplierOIB === supp.supplierOIB)
+        );
+        const suppliersJson = JSON.stringify(uniqueSuppliers);
+        localStorage.setItem(key, suppliersJson);
+      }
       else if (key === itemsCacheKey) {
         let prevItems = loadFromCache(itemsCacheKey) || [];
         const lowercasedItems = [...prevItems, ...data].map(item => ({
@@ -330,7 +351,7 @@
           name: item.name.toLowerCase(),
         }));
         const uniqueItems = lowercasedItems.filter(
-          (item, index) => lowercasedItems.findIndex(i => i.name === item.name) === index
+          (item, index) => index === lowercasedItems.findIndex(i => i.name === item.name)
         );
         const itemsJson = JSON.stringify(uniqueItems);
         localStorage.setItem(key, itemsJson);
@@ -359,6 +380,32 @@
       })
     }
 
+    // Setup loading from supplier
+    i_supplierOIB.addEventListener('keyup', () => {
+      let existsInCache = false;
+      const cachedSuppliers = loadFromCache(suppliersCacheKey);
+      cachedSuppliers?.forEach((supp) => {
+        if (supp.supplierOIB === i_supplierOIB.value.trim()) {
+          existsInCache = true;
+        }
+      })
+      if (existsInCache) {
+        i_supplierSave.classList.remove('d-none');
+      } else {
+        i_supplierSave.classList.add('d-none');
+      }
+    });
+    // Load supplier from cache
+    function loadSupplierFromCache() {
+      const cachedSuppliers = loadFromCache(suppliersCacheKey);
+      cachedSuppliers?.forEach((supp) => {
+        if (supp.supplierOIB === i_supplierOIB.value.trim()) {
+          i_supplierName.value = supp.supplierName;
+          i_supplierAddress.value = supp.supplierAddress;
+        }
+      });
+    }
+
     // Handle Ur. broj
     function handleUrBroj() {
       const docId = i_documentID.value.trim();
@@ -373,6 +420,11 @@
       const cachedDocId = loadFromCache(docIdCacheKey);
       const cachedItems = (loadFromCache(itemsCacheKey) || []).map(item => item.name);
       cachedItems.sort();
+      const cachedSuppliers = (loadFromCache(suppliersCacheKey) || []).map(s => '' + 
+`  ${s.supplierName}:
+    OIB: ${s.supplierOIB}
+    Adresa: ${s.supplierAddress}`);
+      cachedSuppliers.sort();
 
       const formStr = !cachedDocId ? 'Nema spremljenog broja narudžbenice' : `
 Broj prethodno generirane narudžbenice: ${cachedDocId}
@@ -381,7 +433,11 @@ Broj prethodno generirane narudžbenice: ${cachedDocId}
         '\nNema spremljenih stavki' : `
 Spremljene stavke: ${cachedItems.join(', ')}
       `;
-      alert(formStr + itemsStr);
+      const suppliersStr = cachedItems.length < 1 ?
+        '\nNema spremljenih dobavljača' : `
+Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
+      `;
+      alert(formStr + itemsStr + suppliersStr);
     });
 
     // Generate text
@@ -517,6 +573,7 @@ Spremljene stavke: ${cachedItems.join(', ')}
 
       pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.urBroj + '.pdf');
       saveToCache(docIdCacheKey, formData.documentID);
+      saveToCache(suppliersCacheKey, formData);
       saveToCache(itemsCacheKey, formData.items);
     })
 
