@@ -191,7 +191,7 @@
       // Data handlers
       const i_name = document.getElementById('stavka-name-' + itemCounter);
       const i_button = document.getElementById('stavka-onclick-' + itemCounter);
-      i_name.addEventListener('keyup', () => {
+      i_name.addEventListener('input', () => {
         let existsInCache = false;
         const cachedItems = loadFromCache(itemsCacheKey);
         cachedItems?.forEach((item) => {
@@ -214,7 +214,6 @@
       const itemsContainer = document.getElementById("items-container");
       if (itemsContainer.lastElementChild) {
         itemsContainer.removeChild(itemsContainer.lastElementChild);
-        --itemCounter;
       } else {
         alert("Nema stavki za izbrisati.");
       }
@@ -245,7 +244,6 @@
         const quantity = parseFloat(qtys[idx].value);
         const pdv = parseFloat(pdvs[idx].value);
         const price = parseFloat(prices[idx].value);
-        debugger;
         const pricePdv = price * (1 + pdv / 100);
         const totalWithoutPdv = quantity * price;
         const totalPlusPdv = quantity * pricePdv;
@@ -267,7 +265,12 @@
           totalWithoutPdv,
           totalPlusPdv
         };
-      }).filter((item) => item.name || item.quantity || item.price || item.total);
+      }).filter(item =>
+        item.name &&
+        !isNaN(item.quantity) &&
+        !isNaN(item.price) &&
+        !isNaN(item.pdv)
+      );
 
       // Computed values
       const grandTotalWithoutPdv = items.reduce((sum, item) => sum + item.totalWithoutPdv, 0);
@@ -323,6 +326,7 @@
           return false;
         }
       }
+      return true;
     }
 
     // Save data to cache
@@ -381,7 +385,7 @@
     }
 
     // Setup loading from supplier
-    i_supplierOIB.addEventListener('keyup', () => {
+    i_supplierOIB.addEventListener('input', () => {
       let existsInCache = false;
       const cachedSuppliers = loadFromCache(suppliersCacheKey);
       cachedSuppliers?.forEach((supp) => {
