@@ -426,8 +426,8 @@
       cachedItems.sort();
       const cachedSuppliers = (loadFromCache(suppliersCacheKey) || []).map(s => '' + 
 `  ${s.supplierName}:
-    OIB: ${s.supplierOIB}
-    Adresa: ${s.supplierAddress}`);
+      OIB: ${s.supplierOIB}
+      Adresa: ${s.supplierAddress}`);
       cachedSuppliers.sort();
 
       const formStr = !cachedDocId ? 'Nema spremljenog broja narudžbenice' : `
