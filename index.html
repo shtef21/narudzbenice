@@ -87,8 +87,9 @@
         Dostava
       </label>
       <select id="delivery" class="form-select">
-        <option value="" selected>-- Unesite tip dostave --</option>
-        <option value="Paketna dostava">Paketna dostava</option>
+        <!-- TODO - set the first item as selected -->
+        <option value="">-- Unesite tip dostave --</option>
+        <option value="Paketna dostava" selected>Paketna dostava</option>
         <option value="Prijevoz isporučitelja">Prijevoz isporučitelja</option>
         <option value="Prijevoz naručitelja">Prijevoz naručitelja</option>
         <option value="Ostalo">Ostalo</option>
@@ -497,18 +498,35 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
           {
             image: 'logotip',
             // width: 310,
-            width: 240,
-            absolutePosition: { x: 325, y: 40 }
+            width: 200,
+            absolutePosition: { x: 40, y: 40 }
           },
           {
             text: 'Narudžbenica br. ' + formData.documentID + '/' + formData.documentClass,
-            style: 'mainHeader'
+            style: 'mainHeader',
+            margin: [240, 0, 0, 20]
           },
-          { text: 'Naručitelj', style: 'header' },
-          { text: 'OIB: ' + formData.buyerOIB },
-          { text: 'Naziv: ' + formData.buyerName },
-          { text: 'Adresa: ' + formData.buyerAddress },
-          { text: 'E-mail: ' + formData.buyerEmail },
+          {
+            text: 'Naručitelj',
+            style: 'header',
+            margin: [240, 0, 0, 10]
+          },
+          {
+            text: 'OIB: ' + formData.buyerOIB,
+            margin: [240, 0, 0, 0]
+          },
+          {
+            text: 'Naziv: ' + formData.buyerName,
+            margin: [240, 0, 0, 0]
+          },
+          {
+            text: 'Adresa: ' + formData.buyerAddress,
+            margin: [240, 0, 0, 0]
+          },
+          {
+            text: 'E-mail: ' + formData.buyerEmail,
+            margin: [240, 0, 0, 0]
+          },
           { text: '\n' },
           { text: 'Dobavljač', style: 'header' },
           { text: 'OIB: ' + formData.supplierOIB },
@@ -571,7 +589,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
             fontSize: 14,
             bold: true,
             margin: [0, 10, 0, 5]
-          }
+          },
         }
       };
 
