@@ -117,6 +117,14 @@
       <input type="text" class="form-control" id="evidention-number" placeholder="Unesite evidencijski broj iz plana nabave">
     </div>
 
+    <!-- Pozicija iz proračuna -->
+    <div class="mb-3">
+      <label for="pozicija-proracuna" class="form-label fw-bold">
+        Pozicija iz proračuna
+      </label>
+      <input type="text" class="form-control" id="pozicija-proracuna" placeholder="Unesite poziciju iz proračuna">
+    </div>
+
     <!-- Items container -->
     <div id="items-container">
     </div>
@@ -203,6 +211,7 @@
     const i_delivery = document.getElementById("delivery");
     const i_robausluga = document.getElementById("roba_usluga");
     const i_evidentionNum = document.getElementById("evidention-number");
+    const i_pozicijaProracuna = document.getElementById("pozicija-proracuna");
 
     // Add new item row
     addItem.addEventListener("click", function() {
@@ -259,6 +268,7 @@
       const deliveryType = i_delivery.value.trim();
       const robausluga = i_robausluga.value.trim();
       const evidentionNum = i_evidentionNum.value.trim();
+      const pozicijaProracuna = i_pozicijaProracuna.value.trim();
 
       // Items
       const names = document.querySelectorAll(".item-name");
@@ -316,6 +326,7 @@
         deliveryType,
         robausluga,
         evidentionNum,
+        pozicijaProracuna,
         items,
         grandTotalWithoutPdv,
         grandTotalPlusPdv,
@@ -349,6 +360,10 @@
       }
       if (!formData.evidentionNum) {
         alert("Molimo unesite evidencijski broj iz plana nabave");
+        return false;
+      }
+      if (!formData.pozicijaProracuna) {
+        alert("Molimo unesite poziciju iz proračuna");
         return false;
       }
       if (formData.items.length === 0) {
@@ -513,6 +528,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
       orderText += `\nDostava: ${formData.deliveryType}`;
       orderText += `\nTip narudžbe: ${formData.robausluga}`;
       orderText += `\nEvidencijski broj iz plana nabave: ${formData.evidentionNum}`;
+      orderText += `\nPozicija iz proračuna: ${formData.pozicijaProracuna}`;
       orderText += `\n\nUkupni iznos bez PDVa: €${formData.grandTotalWithoutPdv.toFixed(2)}`;
       orderText += `\nUkupni PDV: €${formData.totalPdvAmount.toFixed(2)}`;
       orderText += `\nUKUPNO ZA PLATITI: €${formData.grandTotalPlusPdv.toFixed(2)}`;
@@ -576,6 +592,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
                   '\nDostava: ' + formData.deliveryType +
                   '\nTip narudžbe: ' + formData.robausluga +
                   '\nEvidencijski broj iz plana nabave: ' + formData.evidentionNum +
+                  '\nPozicija iz proračuna: ' + formData.pozicijaProracuna +
                   '\n\nBroj stavki: ' + formData.items.length +
                   '\nUkupno bez PDVa: €' + formData.grandTotalWithoutPdv.toFixed(2) +
                   '\nIznos PDVa: €' + formData.totalPdvAmount.toFixed(2) +
