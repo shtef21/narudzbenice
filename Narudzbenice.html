@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <title>Narudžbenice</title>
+  <link href="./src/bootstrap.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <main class="container my-4 p-4 bg-white rounded shadow-sm">
+    <h1 class="mb-4">Generiranje narudžbenice</h1>
+
+    <!-- Doc ID -->
+    <div class="mb-3">
+      <label for="doc-id" class="form-label fw-bold">
+        Broj narudžbenice
+        <img
+          src="./src/info.svg" 
+          title="Broj narudžbenice automatski se povećava nakon svakog generiranja narudžbenice, a može se i ručno postaviti"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
+      <input type="number" class="form-control" id="doc-id" placeholder="Unesite broj narudžbenice" value="1">
+    </div>
+
+    <!-- Buyer -->
+    <div class="mb-3">
+      <label for="buyer-oib" class="form-label fw-bold">
+        Naručitelj (OIB, naziv, adresa i mail)
+        <img
+          src="./src/info.svg" 
+          title="Podaci o kupcu automatski se popunjavaju"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
+      <input type="text" class="form-control mb-2" id="buyer-oib" value="83507857596" disabled>
+      <input type="text" class="form-control mb-2" id="buyer-name" value="Općina Karojba" disabled>
+      <input type="text" class="form-control mb-2" id="buyer-address" value="Karojba 1, 52424 Motovun" disabled>
+      <input type="text" class="form-control" id="buyer-mail" value="opcina@karojba.hr" disabled>
+    </div>
+
+    <!-- Supplier -->
+    <div class="mb-3">
+      <label for="supplier-oib" class="form-label fw-bold">Dobavljač</label>
+      <div class="input-group mb-2">
+        <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača">
+        <button id="supplier-onclick" class="d-none btn btn-outline-info" type="button" title="Pritisnite za popunjavanje naziva i adrese dobavljača" onclick="loadSupplierFromCache()">
+          📥
+        </button>
+      </div>
+      <input type="text" class="form-control mb-2" id="supplier-name" placeholder="Unesite naziv dobavljača">
+      <input type="text" class="form-control" id="supplier-address" placeholder="Unesite adresu dobavljača">
+    </div>
+
+    <!-- Urudžbeni broj -->
+    <div class="mb-4">
+      <label for="ur-broj" class="form-label fw-bold">
+        Urudžbeni broj
+        <img
+          src="./src/info.svg" 
+          title="Automatski se generira promjenom broja narudžbenice"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
+      <input type="text" class="form-control" id="ur-broj" placeholder="Unesite broj narudžbenice" disabled>
+    </div>
+
+    <!-- Doc. class -->
+    <div class="mb-4">
+      <label for="doc-class" class="form-label fw-bold">
+        Klasa
+        <img
+          src="./src/info.svg" 
+          title="Fiksna za jednu godinu"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
+      <input type="text" class="form-control" id="doc-class" disabled>
+    </div>
+
+    <!-- Delivery -->
+    <div class="mb-3">
+      <label for="delivery" class="form-label fw-bold">
+        Dostava
+      </label>
+      <select id="delivery" class="form-select">
+        <!-- TODO - set the first item as selected -->
+        <option value="">-- Unesite tip dostave --</option>
+        <option value="Paketna dostava" selected>Paketna dostava</option>
+        <option value="Prijevoz isporučitelja">Prijevoz isporučitelja</option>
+        <option value="Prijevoz naručitelja">Prijevoz naručitelja</option>
+        <option value="Ostalo">Ostalo</option>
+      </select>
+    </div>
+
+    <!-- Roba/usluga -->
+    <div class="mb-3">
+      <label for="roba_usluga" class="form-label fw-bold">
+        Tip narudžbe
+      </label>
+      <select id="roba_usluga" class="form-select">
+        <!-- TODO - set the first item as selected -->
+        <option value="">-- Odaberite tip (roba/usluga) --</option>
+        <option value="Roba" selected>Roba</option>
+        <option value="Usluga">Usluga</option>
+      </select>
+    </div>
+
+    <!-- Evidencijski broj -->
+    <div class="mb-3">
+      <label for="evidention-number" class="form-label fw-bold">
+        Evidencijski broj
+      </label>
+      <input type="text" class="form-control" id="evidention-number" placeholder="Unesite evidencijski broj iz plana nabave">
+    </div>
+
+    <!-- Pozicija iz proračuna -->
+    <div class="mb-3">
+      <label for="pozicija-proracuna" class="form-label fw-bold">
+        Pozicija iz proračuna
+      </label>
+      <input type="text" class="form-control" id="pozicija-proracuna" placeholder="Unesite poziciju iz proračuna">
+    </div>
+
+    <!-- Items container -->
+    <div id="items-container">
+    </div>
+
+    <!-- Buttons -->
+    <div class="d-flex gap-2 mb-3">
+      <button type="button" id="add-item" class="btn btn-primary">Dodaj stavku</button>
+      <button type="button" id="remove-item" class="btn btn-danger">Ukloni posljednju stavku</button>
+      <button type="button" id="show-saved" class="btn btn-warning">Prikaži spremljene podatke</button>
+      <button type="button" id="generate-text" class="btn btn-success">Prikaži tekst</button>
+    </div>
+    <div class="d-flex gap-2 mb-3">
+      <button type="button" id="generate-pdf" class="btn btn-success w-100">Generiraj PDF</button>
+    </div>
+
+    <pre id="output" class="p-3 border bg-light rounded"></pre>
+  </main>
+
+  <!-- Item template -->
+  <template id="template-stavka">
+    <div class="mb-2">
+      <label class="form-label fw-bold">
+        Stavka BROJ_STAVKE (Proizvod/Usluga)
+        <img
+          src="./src/info.svg" 
+          title="Upisom stavki s ranijih narudžbenica pojavljuje se mogućnost brzog unosa količine, PDVa i cijene"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
+      <div class="input-group mb-2">
+        <input id="stavka-name-BROJ_STAVKE" type="text" class="form-control item-name" placeholder="Naziv proizvoda ili usluge">
+        <button id="stavka-onclick-BROJ_STAVKE" class="d-none btn btn-outline-info" type="button" title="Pritisnite za popunjavanje količine, PDVa i jedinične cijene" onclick="loadItemFromCache(BROJ_STAVKE)">
+          📥
+        </button>
+      </div>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Količina</label>
+      <input id="stavka-qty-BROJ_STAVKE" type="number" class="form-control item-qty" placeholder="Unesite količinu">
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Cijena bez PDVa (€)</label>
+      <input id="stavka-price-BROJ_STAVKE" type="number" class="form-control item-price" step="0.01" placeholder="Unesite cijenu">
+    </div>
+    <div>
+      <label class="form-label">PDV (%)</label>
+      <input id="stavka-pdv-BROJ_STAVKE" type="number" class="form-control item-pdv" placeholder="Unesite iznos PDVa">
+    </div>
+  </template>
+
+  <script src="./src/bootstrap.js"></script>
+  <script src="./src/pdfmake.min.js"></script>
+  <script src="./src/vfs_fonts.js"></script>
+  <script src="./src/base64images.js"></script>
+  <script>
+    // Control fields
+    const templateStavka = document.getElementById('template-stavka');
+    const docIdCacheKey = 'podaci-broj-narudzbenice';
+    const suppliersCacheKey = 'podaci-narudzbenice-dobavljaci';
+    const itemsCacheKey = 'podaci-narudzbenice-stavke';
+    const itemsContainer = document.getElementById("items-container");
+    let itemCounter = 1;
+
+    // Buttons
+    const addItem = document.getElementById("add-item");
+    const removeItem = document.getElementById("remove-item");
+    const showSavedData = document.getElementById("show-saved");
+    const generateText = document.getElementById("generate-text");
+    const generatePdf = document.getElementById("generate-pdf");
+
+    // Form fields
+    const i_documentID = document.getElementById("doc-id");
+    const i_buyerOIB = document.getElementById("buyer-oib");
+    const i_buyerName = document.getElementById("buyer-name");
+    const i_buyerAddress = document.getElementById("buyer-address");
+    const i_buyerEmail = document.getElementById("buyer-mail");
+    const i_supplierOIB = document.getElementById("supplier-oib");
+    const i_supplierName = document.getElementById("supplier-name");
+    const i_supplierAddress = document.getElementById("supplier-address");
+    const i_supplierSave = document.getElementById("supplier-onclick");
+    const i_urBroj = document.getElementById("ur-broj");
+    const i_documentClass = document.getElementById("doc-class");
+    const i_delivery = document.getElementById("delivery");
+    const i_robausluga = document.getElementById("roba_usluga");
+    const i_evidentionNum = document.getElementById("evidention-number");
+    const i_pozicijaProracuna = document.getElementById("pozicija-proracuna");
+
+    // Add new item row
+    addItem.addEventListener("click", function() {
+      // Generate HTML
+      const itemRow = document.createElement("div");
+      itemRow.classList.add("border", "p-3", "mb-3", "rounded", "bg-light-subtle");
+      itemRow.innerHTML = templateStavka.innerHTML.replaceAll('BROJ_STAVKE', itemCounter);
+      itemsContainer.appendChild(itemRow);
+
+      // Data handlers
+      const i_name = document.getElementById('stavka-name-' + itemCounter);
+      const i_button = document.getElementById('stavka-onclick-' + itemCounter);
+      i_name.addEventListener('input', () => {
+        let existsInCache = false;
+        const cachedItems = loadFromCache(itemsCacheKey);
+        cachedItems?.forEach((item) => {
+          if (item.name.toLowerCase() === i_name.value.trim().toLowerCase()) {
+            existsInCache = true;
+          }
+        })
+        if (existsInCache) {
+          i_button.classList.remove('d-none');
+        } else {
+          i_button.classList.add('d-none');
+        }
+      });
+
+      itemCounter++;
+    });
+    
+    // Remove last item row
+    removeItem.addEventListener("click", function() {
+      const itemsContainer = document.getElementById("items-container");
+      if (itemsContainer.lastElementChild) {
+        itemsContainer.removeChild(itemsContainer.lastElementChild);
+      } else {
+        alert("Nema stavki za izbrisati.");
+      }
+    });
+
+    // Get form data
+    function getFormData() {
+      // Basic values
+      const documentID = i_documentID.value.trim();
+      const buyerOIB = i_buyerOIB.value.trim();
+      const buyerName = i_buyerName.value.trim();
+      const buyerAddress = i_buyerAddress.value.trim();
+      const buyerEmail = i_buyerEmail.value.trim();
+      const supplierOIB = i_supplierOIB.value.trim();
+      const supplierName = i_supplierName.value.trim();
+      const supplierAddress = i_supplierAddress.value.trim();
+      const urBroj = i_urBroj.value.trim();
+      const documentClass = i_documentClass.value.trim();
+      const deliveryType = i_delivery.value.trim();
+      const robausluga = i_robausluga.value.trim();
+      const evidentionNum = i_evidentionNum.value.trim();
+      const pozicijaProracuna = i_pozicijaProracuna.value.trim();
+
+      // Items
+      const names = document.querySelectorAll(".item-name");
+      const qtys = document.querySelectorAll(".item-qty");
+      const pdvs = document.querySelectorAll(".item-pdv")
+      const prices = document.querySelectorAll(".item-price");
+      const items = names.length === 0 ? [] : [...names].map((_, idx) => {
+        const name = names[idx].value.trim();
+        const quantity = parseFloat(qtys[idx].value);
+        const pdv = parseFloat(pdvs[idx].value);
+        const price = parseFloat(prices[idx].value);
+        const pricePdv = price * (1 + pdv / 100);
+        const totalWithoutPdv = quantity * price;
+        const totalPlusPdv = quantity * pricePdv;
+        console.log({
+          name,
+          quantity,
+          pdv,
+          price,
+          pricePdv,
+          totalWithoutPdv,
+          totalPlusPdv
+        })
+        return {
+          name,
+          quantity,
+          pdv,
+          price,
+          pricePdv,
+          totalWithoutPdv,
+          totalPlusPdv
+        };
+      }).filter(item =>
+        item.name &&
+        !isNaN(item.quantity) &&
+        !isNaN(item.price) &&
+        !isNaN(item.pdv)
+      );
+
+      // Computed values
+      const grandTotalWithoutPdv = items.reduce((sum, item) => sum + item.totalWithoutPdv, 0);
+      const grandTotalPlusPdv = items.reduce((sum, item) => sum + item.totalPlusPdv, 0);
+      const totalPdvAmount = grandTotalPlusPdv - grandTotalWithoutPdv;
+      return {
+        documentID,
+        buyerOIB,
+        buyerName,
+        buyerAddress,
+        buyerEmail,
+        supplierOIB,
+        supplierName,
+        supplierAddress,
+        urBroj,
+        documentClass,
+        deliveryType,
+        robausluga,
+        evidentionNum,
+        pozicijaProracuna,
+        items,
+        grandTotalWithoutPdv,
+        grandTotalPlusPdv,
+        totalPdvAmount,
+        created: new Date(),
+        createdStr: new Date().toLocaleDateString("hr-HR").replaceAll(' ', ''),
+      };
+    }
+
+    // Validate data of the form
+    function validateFormData(formData) {
+      if (!formData.documentID || !formData.urBroj) {
+        alert("Molimo unesite broj narudžbenice");
+        return false;
+      }
+
+      if (!formData.supplierOIB
+        || !formData.supplierName
+        || !formData.supplierAddress
+      ) {
+        alert("Molimo unesite OIB, naziv i adresu dobavljača.");
+        return false;
+      }
+      if (!formData.deliveryType) {
+        alert("Molimo unesite dostavu.");
+        return false;
+      }
+      if (!formData.robausluga) {
+        alert("Molimo odaberite tip narudžbe (roba/usluga).");
+        return false;
+      }
+      if (!formData.evidentionNum) {
+        alert("Molimo unesite evidencijski broj iz plana nabave");
+        return false;
+      }
+      if (!formData.pozicijaProracuna) {
+        alert("Molimo unesite poziciju iz proračuna");
+        return false;
+      }
+      if (formData.items.length === 0) {
+        alert("Molimo unesite barem 1 stavku pritiskom na gumb 'Dodaj stavku' te ispunite sve podatke.");
+        return false;
+      }
+      for (let i = 0; i < formData.items.length; i++) {
+        let item = formData.items[i];
+        if (!item.name || isNaN(item.quantity) || isNaN(item.pdv) || isNaN(item.price)) {
+          alert("Molimo unesite sve podatke stavke broj " + (i+1) + ".");
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Save data to cache
+    function saveToCache(key, data) {
+      if (key === docIdCacheKey) {
+        localStorage.setItem(key, JSON.stringify(data));
+      }
+      else if (key === suppliersCacheKey) {
+        const newSupplier = {
+          supplierOIB: data.supplierOIB,
+          supplierName: data.supplierName,
+          supplierAddress: data.supplierAddress,
+        };
+        let prevSuppliers = loadFromCache(suppliersCacheKey) || [];
+        prevSuppliers.push(newSupplier);
+        const uniqueSuppliers = prevSuppliers.filter(
+          (supp, index) => index === prevSuppliers.findIndex(s => s.supplierOIB === supp.supplierOIB)
+        );
+        const suppliersJson = JSON.stringify(uniqueSuppliers);
+        localStorage.setItem(key, suppliersJson);
+      }
+      else if (key === itemsCacheKey) {
+        let prevItems = loadFromCache(itemsCacheKey) || [];
+        const lowercasedItems = [...prevItems, ...data].map(item => ({
+          ...item,
+          name: item.name.toLowerCase(),
+        }));
+        const uniqueItems = lowercasedItems.filter(
+          (item, index) => index === lowercasedItems.findIndex(i => i.name === item.name)
+        );
+        const itemsJson = JSON.stringify(uniqueItems);
+        localStorage.setItem(key, itemsJson);
+      }
+    }
+
+    // Load data from cache
+    function loadFromCache(key) {
+      return JSON.parse(localStorage.getItem(key));
+    }
+
+    // Load item value from cache
+    function loadItemFromCache(brojStavke) {
+      const i_name = document.getElementById('stavka-name-' + brojStavke);
+      const i_qty = document.getElementById('stavka-qty-' + brojStavke);
+      const i_pdv = document.getElementById('stavka-pdv-' + brojStavke)
+      const i_price = document.getElementById('stavka-price-' + brojStavke);
+      const cachedItems = loadFromCache(itemsCacheKey);
+
+      cachedItems?.forEach((item) => {
+        if (item.name.toLowerCase() === i_name.value.trim().toLowerCase()) {
+          i_qty.value = item.quantity;
+          i_pdv.value = item.pdv;
+          i_price.value = item.price;
+        }
+      })
+    }
+
+    // Setup loading from supplier
+    i_supplierOIB.addEventListener('input', () => {
+      let existsInCache = false;
+      const cachedSuppliers = loadFromCache(suppliersCacheKey);
+      cachedSuppliers?.forEach((supp) => {
+        if (supp.supplierOIB === i_supplierOIB.value.trim()) {
+          existsInCache = true;
+        }
+      })
+      if (existsInCache) {
+        i_supplierSave.classList.remove('d-none');
+      } else {
+        i_supplierSave.classList.add('d-none');
+      }
+    });
+    // Load supplier from cache
+    function loadSupplierFromCache() {
+      const cachedSuppliers = loadFromCache(suppliersCacheKey);
+      cachedSuppliers?.forEach((supp) => {
+        if (supp.supplierOIB === i_supplierOIB.value.trim()) {
+          i_supplierName.value = supp.supplierName;
+          i_supplierAddress.value = supp.supplierAddress;
+        }
+      });
+    }
+
+    // Handle Ur. broj
+    function handleUrBroj() {
+      const docId = i_documentID.value.trim();
+      const now = new Date();
+      const newUrBroj = !docId ? '' : `${docId}-${now.getMonth() + 1}-${now.getFullYear()}`;
+      i_urBroj.value = newUrBroj;
+    }
+    i_documentID.addEventListener("input", handleUrBroj);
+
+    // Show saved data
+    showSavedData.addEventListener("click", function() {
+      const cachedDocId = loadFromCache(docIdCacheKey);
+      const cachedItems = (loadFromCache(itemsCacheKey) || []).map(item => item.name);
+      cachedItems.sort();
+      const cachedSuppliers = (loadFromCache(suppliersCacheKey) || []).map(s => '' + 
+`  ${s.supplierName}:
+      OIB: ${s.supplierOIB}
+      Adresa: ${s.supplierAddress}`);
+      cachedSuppliers.sort();
+
+      const formStr = !cachedDocId ? 'Nema spremljenog broja narudžbenice' : `
+Broj prethodno generirane narudžbenice: ${cachedDocId}
+      `;
+      const itemsStr = cachedItems.length < 1 ?
+        '\nNema spremljenih stavki' : `
+Spremljene stavke: ${cachedItems.join(', ')}
+      `;
+      const suppliersStr = cachedItems.length < 1 ?
+        '\nNema spremljenih dobavljača' : `
+Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
+      `;
+      alert(formStr + itemsStr + suppliersStr);
+    });
+
+    // Generate text
+    generateText.addEventListener("click", function() {
+      const formData = getFormData();
+
+      if (validateFormData(formData) === false) {
+        console.log('User did not fill entire form correctly.');
+        return;
+      }
+
+      // Create output text
+      let orderText = `NARUDŽBENICA ${formData.documentID}/${formData.documentClass}`;
+      orderText += `\n\nNaručitelj: ${formData.buyerName}`;
+      orderText += `\n  OIB: ${formData.buyerOIB}`;
+      orderText += `\n  Adresa: ${formData.buyerAddress}`;
+      orderText += `\n  E-mail: ${formData.buyerEmail}`;
+      orderText += `\nDobavljač: ${formData.supplierName}`;
+      orderText += `\n  OIB: ${formData.supplierOIB}`;
+      orderText += `\n  Adresa: ${formData.supplierAddress}`;
+      orderText += `\n\nSTAVKE:`;
+
+      for (let item of formData.items) {
+        orderText += `\n- ${item.name}`
+          + ` | €${item.price.toFixed(2)}/kom.`
+          + ` | ${item.quantity} kom.`
+          + ` | ${item.pdv.toFixed(2)}% PDV`
+          + ` | Uk. (bez PDVa): €${item.totalWithoutPdv.toFixed(2)}`
+          + ` | Ukupno s PDVom: €${item.totalPlusPdv.toFixed(2)}`;
+      }
+      orderText += `\n\nUrudžbeni broj: ${formData.urBroj}`;
+      orderText += `\nKlasa: ${formData.documentClass}`;
+      orderText += `\nDostava: ${formData.deliveryType}`;
+      orderText += `\nTip narudžbe: ${formData.robausluga}`;
+      orderText += `\nEvidencijski broj iz plana nabave: ${formData.evidentionNum}`;
+      orderText += `\nPozicija iz proračuna: ${formData.pozicijaProracuna}`;
+      orderText += `\n\nUkupni iznos bez PDVa: €${formData.grandTotalWithoutPdv.toFixed(2)}`;
+      orderText += `\nUkupni PDV: €${formData.totalPdvAmount.toFixed(2)}`;
+      orderText += `\nUKUPNO ZA PLATITI: €${formData.grandTotalPlusPdv.toFixed(2)}`;
+      orderText += `\n\nDatum: ${formData.createdStr}`;
+
+      document.getElementById("output").textContent = orderText;
+    });
+
+    // Generate PDF
+    generatePdf.addEventListener("click", function() {
+      const formData = getFormData();
+
+      if (validateFormData(formData) === false) {
+        console.log('User did not fill entire form correctly.');
+        return;
+      }
+
+      const docDefinition = {
+        content: [
+          {
+            image: 'logotip',
+            // width: 310,
+            width: 200,
+            absolutePosition: { x: 40, y: 40 }
+          },
+          {
+            text: 'Narudžbenica br. ' + formData.documentID + '/' + formData.documentClass,
+            style: 'mainHeader',
+            margin: [240, 0, 0, 20]
+          },
+          {
+            text: 'Naručitelj',
+            style: 'header',
+            margin: [240, 0, 0, 10]
+          },
+          {
+            text: 'OIB: ' + formData.buyerOIB,
+            margin: [240, 0, 0, 0]
+          },
+          {
+            text: 'Naziv: ' + formData.buyerName,
+            margin: [240, 0, 0, 0]
+          },
+          {
+            text: 'Adresa: ' + formData.buyerAddress,
+            margin: [240, 0, 0, 0]
+          },
+          {
+            text: 'E-mail: ' + formData.buyerEmail,
+            margin: [240, 0, 0, 0]
+          },
+          { text: '\n' },
+          { text: 'Dobavljač', style: 'header' },
+          { text: 'OIB: ' + formData.supplierOIB },
+          { text: 'Naziv: ' + formData.supplierName },
+          { text: 'Adresa: ' + formData.supplierAddress },
+          { text: '\n' },
+          { text: 'Podaci', style: 'header' },
+          { text: 'Urudžbeni broj: ' + formData.urBroj +
+                  '\nKlasa: ' + formData.documentClass +
+                  '\nDostava: ' + formData.deliveryType +
+                  '\nTip narudžbe: ' + formData.robausluga +
+                  '\nEvidencijski broj iz plana nabave: ' + formData.evidentionNum +
+                  '\nPozicija iz proračuna: ' + formData.pozicijaProracuna +
+                  '\n\nBroj stavki: ' + formData.items.length +
+                  '\nUkupno bez PDVa: €' + formData.grandTotalWithoutPdv.toFixed(2) +
+                  '\nIznos PDVa: €' + formData.totalPdvAmount.toFixed(2) +
+                  '\nUKUPNA CIJENA: €' + formData.grandTotalPlusPdv.toFixed(2)
+          },
+          { text: 'Stavke:', style: 'subheader' },
+          {
+            table: {
+              headerRows: 1,
+              widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto'],
+              body: [
+                [
+                  { text: 'Naziv', bold: true, wrap: true },
+                  { text: 'Cijena bez \nPDVa (€)', bold: true },
+                  { text: 'Kol.', bold: true },
+                  { text: 'PDV (%)', bold: true },
+                  { text: 'Ukupno bez \nPDVa (€)', bold: true },
+                  { text: 'Ukupno s \nPDVom (€)', bold: true }
+                ],
+                ...formData.items.map((item) => 
+                  [
+                    item.name,
+                    item.price.toFixed(2),
+                    item.quantity,
+                    item.pdv.toFixed(2),
+                    item.totalWithoutPdv.toFixed(2),
+                    item.totalPlusPdv.toFixed(2)
+                  ]
+                )
+              ]
+            }
+          },
+          { text: '\n Generirano ' + formData.createdStr }
+        ],
+        images: {
+          logotip: logotipBase64,
+        },
+        styles: {
+          mainHeader: {
+            fontSize: 22,
+            bold: true,
+            margin: [0, 0, 0, 20]
+          },
+          header: {
+            fontSize: 18,
+            bold: true,
+            margin: [0, 0, 0, 10]
+          },
+          subheader: {
+            fontSize: 14,
+            bold: true,
+            margin: [0, 10, 0, 5]
+          },
+        }
+      };
+
+      pdfMake.createPdf(docDefinition).download('Narudzbenica-' + formData.urBroj + '.pdf');
+      saveToCache(docIdCacheKey, formData.documentID);
+      saveToCache(suppliersCacheKey, formData);
+      saveToCache(itemsCacheKey, formData.items);
+    })
+
+
+    // Setup document
+    async function setupDocument() {
+      // Add an item
+      addItem.click();
+
+      // Set document ID
+      const cachedDocId = loadFromCache(docIdCacheKey);
+      if (cachedDocId) {
+        i_documentID.value = parseInt(cachedDocId) + 1;
+      }
+
+      // Now set ur. broj and doc class
+      handleUrBroj();
+      const docClass = new Date().getFullYear() - 2000;
+      i_documentClass.value = docClass;
+    }
+    setupDocument();
+
+  </script>
+</body>
+</html>
