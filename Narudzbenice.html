@@ -42,7 +42,15 @@
 
     <!-- Supplier -->
     <div class="mb-3">
-      <label for="supplier-oib" class="form-label fw-bold">Dobavljač</label>
+      <label for="supplier-oib" class="form-label fw-bold">
+        Dobavljač
+        <img
+          src="./src/info.svg" 
+          title="Upisom OIBa iz ranijih narudžbenica pojavljuje se mogućnost brzog unosa naziva i adrese dobavljača"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
       <div class="input-group mb-2">
         <input type="text" class="form-control" id="supplier-oib" placeholder="Unesite OIB dobavljača">
         <button id="supplier-onclick" class="d-none btn btn-outline-info" type="button" title="Pritisnite za popunjavanje naziva i adrese dobavljača" onclick="loadSupplierFromCache()">
