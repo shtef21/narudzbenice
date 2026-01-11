@@ -131,6 +131,20 @@
       <input type="text" class="form-control" id="pozicija-proracuna" placeholder="Unesite poziciju iz proračuna">
     </div>
 
+    <!-- Odobrio -->
+    <div class="mb-4">
+      <label for="odobrio" class="form-label fw-bold">
+        Narudžbu inicirao i odobrio
+        <img
+          src="./src/info.svg" 
+          title="Fiksna informacija"
+          alt="info"
+          style="height: 1.5rem;"
+        />
+      </label>
+      <input type="text" class="form-control" id="odobrio" value="Marko Lakošeljac" disabled>
+    </div>
+
     <!-- Items container -->
     <div id="items-container">
     </div>
@@ -218,6 +232,7 @@
     const i_robausluga = document.getElementById("roba_usluga");
     const i_evidentionNum = document.getElementById("evidention-number");
     const i_pozicijaProracuna = document.getElementById("pozicija-proracuna");
+    const i_odobrio = document.getElementById("odobrio");
 
     // Add new item row
     addItem.addEventListener("click", function() {
@@ -275,6 +290,7 @@
       const robausluga = i_robausluga.value.trim();
       const evidentionNum = i_evidentionNum.value.trim();
       const pozicijaProracuna = i_pozicijaProracuna.value.trim();
+      const odobrio = i_odobrio.value.trim();
 
       // Items
       const names = document.querySelectorAll(".item-name");
@@ -333,6 +349,7 @@
         robausluga,
         evidentionNum,
         pozicijaProracuna,
+        odobrio,
         items,
         grandTotalWithoutPdv,
         grandTotalPlusPdv,
@@ -538,7 +555,8 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
       orderText += `\n\nUkupni iznos bez PDVa: €${formData.grandTotalWithoutPdv.toFixed(2)}`;
       orderText += `\nUkupni PDV: €${formData.totalPdvAmount.toFixed(2)}`;
       orderText += `\nUKUPNO ZA PLATITI: €${formData.grandTotalPlusPdv.toFixed(2)}`;
-      orderText += `\n\nDatum: ${formData.createdStr}`;
+      orderText += `\n\nNarudžbu inicirao i odobrio: ${formData.odobrio}`;
+      orderText += `\nDatum: ${formData.createdStr}`;
 
       document.getElementById("output").textContent = orderText;
     });
@@ -631,7 +649,8 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
               ]
             }
           },
-          { text: '\n Generirano ' + formData.createdStr }
+          { text: '\nNarudžbu inicirao i odobrio: ' + formData.odobrio },
+          { text: '\nGenerirano ' + formData.createdStr }
         ],
         images: {
           logotip: logotipBase64,
