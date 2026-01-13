@@ -65,28 +65,16 @@
     <div class="mb-4">
       <label for="ur-broj" class="form-label fw-bold">
         Urudžbeni broj
-        <img
-          src="./src/info.svg" 
-          title="Automatski se generira promjenom broja narudžbenice"
-          alt="info"
-          style="height: 1.5rem;"
-        />
       </label>
-      <input type="text" class="form-control" id="ur-broj" placeholder="Unesite broj narudžbenice" disabled>
+      <input type="text" class="form-control" id="ur-broj" placeholder="Unesite UR. broj">
     </div>
 
     <!-- Doc. class -->
     <div class="mb-4">
       <label for="doc-class" class="form-label fw-bold">
         Klasa
-        <img
-          src="./src/info.svg" 
-          title="Fiksna za jednu godinu"
-          alt="info"
-          style="height: 1.5rem;"
-        />
       </label>
-      <input type="text" class="form-control" id="doc-class" disabled>
+      <input type="text" class="form-control" id="doc-class" placeholder="Unesite klasu dokumenta">
     </div>
 
     <!-- Delivery -->
@@ -361,7 +349,7 @@
 
     // Validate data of the form
     function validateFormData(formData) {
-      if (!formData.documentID || !formData.urBroj) {
+      if (!formData.documentID) {
         alert("Molimo unesite broj narudžbenice");
         return false;
       }
@@ -371,6 +359,14 @@
         || !formData.supplierAddress
       ) {
         alert("Molimo unesite OIB, naziv i adresu dobavljača.");
+        return false;
+      }
+      if (!formData.urBroj) {
+        alert("Molimo unesite urudžbeni broj");
+        return false;
+      }
+      if (!formData.documentClass) {
+        alert("Molimo unesite klasu dokumenta");
         return false;
       }
       if (!formData.deliveryType) {
@@ -483,15 +479,6 @@
         }
       });
     }
-
-    // Handle Ur. broj
-    function handleUrBroj() {
-      const docId = i_documentID.value.trim();
-      const now = new Date();
-      const newUrBroj = !docId ? '' : `${docId}-${now.getMonth() + 1}-${now.getFullYear()}`;
-      i_urBroj.value = newUrBroj;
-    }
-    i_documentID.addEventListener("input", handleUrBroj);
 
     // Show saved data
     showSavedData.addEventListener("click", function() {
@@ -650,6 +637,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
             }
           },
           { text: '\nNarudžbu inicirao i odobrio: ' + formData.odobrio },
+          { text: '\n\n___________________________' },
           { text: '\nGenerirano ' + formData.createdStr }
         ],
         images: {
@@ -691,11 +679,6 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
       if (cachedDocId) {
         i_documentID.value = parseInt(cachedDocId) + 1;
       }
-
-      // Now set ur. broj and doc class
-      handleUrBroj();
-      const docClass = new Date().getFullYear() - 2000;
-      i_documentClass.value = docClass;
     }
     setupDocument();
 
