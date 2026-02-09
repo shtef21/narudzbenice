@@ -514,8 +514,10 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
         return;
       }
 
+      const fullYear = new Date().getFullYear();
+
       // Create output text
-      let orderText = `NARUDŽBENICA ${formData.documentID}/${formData.documentClass}`;
+      let orderText = `NARUDŽBENICA ${formData.documentID}/${fullYear}`;
       orderText += `\n\nNaručitelj: ${formData.buyerName}`;
       orderText += `\n  OIB: ${formData.buyerOIB}`;
       orderText += `\n  Adresa: ${formData.buyerAddress}`;
@@ -556,6 +558,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
         console.log('User did not fill entire form correctly.');
         return;
       }
+      const fullYear = new Date().getFullYear();
 
       const docDefinition = {
         content: [
@@ -566,7 +569,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
             absolutePosition: { x: 40, y: 40 }
           },
           {
-            text: 'Narudžbenica br. ' + formData.documentID + '/' + formData.documentClass,
+            text: 'Narudžbenica br. ' + formData.documentID + '/' + fullYear,
             style: 'mainHeader',
             margin: [240, 0, 0, 20]
           },
