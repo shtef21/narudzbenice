@@ -62,7 +62,7 @@
     </div>
 
     <!-- Urudžbeni broj -->
-    <div class="mb-4">
+    <div class="mb-3">
       <label for="ur-broj" class="form-label fw-bold">
         Urudžbeni broj
       </label>
@@ -70,7 +70,7 @@
     </div>
 
     <!-- Doc. class -->
-    <div class="mb-4">
+    <div class="mb-3">
       <label for="doc-class" class="form-label fw-bold">
         Klasa
       </label>
@@ -120,7 +120,7 @@
     </div>
 
     <!-- Odobrio -->
-    <div class="mb-4">
+    <div class="mb-3">
       <label for="odobrio" class="form-label fw-bold">
         Narudžbu inicirao i odobrio
         <img
@@ -131,6 +131,14 @@
         />
       </label>
       <input type="text" class="form-control" id="odobrio" value="Marko Lakošeljac" disabled>
+    </div>
+
+    <!-- Datum izdavanja -->
+    <div class="mb-4">
+      <label for="datum-izdavanja" class="form-label fw-bold">
+        Datum izdavanja
+      </label>
+      <input type="text" class="form-control" id="datum-izdavanja" placeholder="Unesite datum izdavanja">
     </div>
 
     <!-- Items container -->
@@ -221,6 +229,7 @@
     const i_evidentionNum = document.getElementById("evidention-number");
     const i_pozicijaProracuna = document.getElementById("pozicija-proracuna");
     const i_odobrio = document.getElementById("odobrio");
+    const i_datumIzdavanja = document.getElementById("datum-izdavanja");
 
     // Add new item row
     addItem.addEventListener("click", function() {
@@ -279,6 +288,7 @@
       const evidentionNum = i_evidentionNum.value.trim();
       const pozicijaProracuna = i_pozicijaProracuna.value.trim();
       const odobrio = i_odobrio.value.trim();
+      const datumIzdavanja = i_datumIzdavanja.value.trim();
 
       // Items
       const names = document.querySelectorAll(".item-name");
@@ -338,6 +348,7 @@
         evidentionNum,
         pozicijaProracuna,
         odobrio,
+        datumIzdavanja,
         items,
         grandTotalWithoutPdv,
         grandTotalPlusPdv,
@@ -383,6 +394,10 @@
       }
       if (!formData.pozicijaProracuna) {
         alert("Molimo unesite poziciju iz proračuna");
+        return false;
+      }
+      if (!formData.datumIzdavanja) {
+        alert("Molimo unesite datum izdavanja");
         return false;
       }
       if (formData.items.length === 0) {
@@ -541,11 +556,11 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
       orderText += `\nTip narudžbe: ${formData.robausluga}`;
       orderText += `\nEvidencijski broj iz plana nabave: ${formData.evidentionNum}`;
       orderText += `\nPozicija iz proračuna: ${formData.pozicijaProracuna}`;
+      orderText += `\nDatum izdavanja: ${formData.datumIzdavanja}`;
       orderText += `\n\nUkupni iznos bez PDVa: €${formData.grandTotalWithoutPdv.toFixed(2)}`;
       orderText += `\nUkupni PDV: €${formData.totalPdvAmount.toFixed(2)}`;
       orderText += `\nUKUPNO ZA PLATITI: €${formData.grandTotalPlusPdv.toFixed(2)}`;
       orderText += `\n\nNarudžbu inicirao i odobrio: ${formData.odobrio}`;
-      orderText += `\nDatum: ${formData.createdStr}`;
 
       document.getElementById("output").textContent = orderText;
     });
@@ -607,6 +622,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
                   '\nTip narudžbe: ' + formData.robausluga +
                   '\nEvidencijski broj iz plana nabave: ' + formData.evidentionNum +
                   '\nPozicija iz proračuna: ' + formData.pozicijaProracuna +
+                  '\nDatum izdavanja: ' + formData.datumIzdavanja +
                   '\n\nBroj stavki: ' + formData.items.length +
                   '\nUkupno bez PDVa: €' + formData.grandTotalWithoutPdv.toFixed(2) +
                   '\nIznos PDVa: €' + formData.totalPdvAmount.toFixed(2) +
@@ -641,7 +657,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
           },
           { text: '\nNarudžbu inicirao i odobrio: ' + formData.odobrio },
           { text: '\n\n___________________________' },
-          { text: '\nGenerirano ' + formData.createdStr }
+          // { text: '\nGenerirano ' + formData.createdStr }
         ],
         images: {
           logotip: logotipBase64,
