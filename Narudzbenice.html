@@ -105,6 +105,14 @@
 
     <!-- Evidencijski broj -->
     <div class="mb-3">
+      <label for="description" class="form-label fw-bold">
+        Opis narudžbe
+      </label>
+      <input type="text" class="form-control" id="description" placeholder="Unesite opis narudžbe">
+    </div>
+
+    <!-- Evidencijski broj -->
+    <div class="mb-3">
       <label for="evidention-number" class="form-label fw-bold">
         Evidencijski broj
       </label>
@@ -226,6 +234,7 @@
     const i_documentClass = document.getElementById("doc-class");
     const i_delivery = document.getElementById("delivery");
     const i_robausluga = document.getElementById("roba_usluga");
+    const i_opis = document.getElementById("description");
     const i_evidentionNum = document.getElementById("evidention-number");
     const i_pozicijaProracuna = document.getElementById("pozicija-proracuna");
     const i_odobrio = document.getElementById("odobrio");
@@ -285,6 +294,7 @@
       const documentClass = i_documentClass.value.trim();
       const deliveryType = i_delivery.value.trim();
       const robausluga = i_robausluga.value.trim();
+      const opis = i_opis.value.trim();
       const evidentionNum = i_evidentionNum.value.trim();
       const pozicijaProracuna = i_pozicijaProracuna.value.trim();
       const odobrio = i_odobrio.value.trim();
@@ -345,6 +355,7 @@
         documentClass,
         deliveryType,
         robausluga,
+        opis,
         evidentionNum,
         pozicijaProracuna,
         odobrio,
@@ -386,6 +397,10 @@
       }
       if (!formData.robausluga) {
         alert("Molimo odaberite tip narudžbe (roba/usluga).");
+        return false;
+      }
+      if (!formData.opis) {
+        alert("Molimo unesite opis narudžbe");
         return false;
       }
       if (!formData.evidentionNum) {
@@ -513,7 +528,7 @@ Broj prethodno generirane narudžbenice: ${cachedDocId}
         '\nNema spremljenih stavki' : `
 Spremljene stavke: ${cachedItems.join(', ')}
       `;
-      const suppliersStr = cachedItems.length < 1 ?
+      const suppliersStr = cachedSuppliers.length < 1 ?
         '\nNema spremljenih dobavljača' : `
 Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
       `;
@@ -554,6 +569,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
       orderText += `\nKlasa: ${formData.documentClass}`;
       orderText += `\nDostava: ${formData.deliveryType}`;
       orderText += `\nTip narudžbe: ${formData.robausluga}`;
+      orderText += `\nOpis narudžbe: ${formData.opis}`;
       orderText += `\nEvidencijski broj iz plana nabave: ${formData.evidentionNum}`;
       orderText += `\nPozicija iz proračuna: ${formData.pozicijaProracuna}`;
       orderText += `\nDatum izdavanja: ${formData.datumIzdavanja}`;
@@ -620,6 +636,7 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
                   '\nKlasa: ' + formData.documentClass +
                   '\nDostava: ' + formData.deliveryType +
                   '\nTip narudžbe: ' + formData.robausluga +
+                  '\nOpis narudžbe: ' + formData.opis +
                   '\nEvidencijski broj iz plana nabave: ' + formData.evidentionNum +
                   '\nPozicija iz proračuna: ' + formData.pozicijaProracuna +
                   '\nDatum izdavanja: ' + formData.datumIzdavanja +
