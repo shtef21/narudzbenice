@@ -240,6 +240,11 @@
     const i_odobrio = document.getElementById("odobrio");
     const i_datumIzdavanja = document.getElementById("datum-izdavanja");
 
+    // Round to 2 decimals and return as string
+    function numberRound(number) {
+      return (Math.round(number * 100) / 100).toFixed(2)
+    }
+
     // Add new item row
     addItem.addEventListener("click", function() {
       // Generate HTML
@@ -559,11 +564,11 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
 
       for (let item of formData.items) {
         orderText += `\n- ${item.name}`
-          + ` | €${item.price.toFixed(2)}/kom.`
+          + ` | €${numberRound(item.price)}/kom.`
           + ` | ${item.quantity} kom.`
-          + ` | ${item.pdv.toFixed(2)}% PDV`
-          + ` | Uk. (bez PDVa): €${item.totalWithoutPdv.toFixed(2)}`
-          + ` | Ukupno s PDVom: €${item.totalPlusPdv.toFixed(2)}`;
+          + ` | ${numberRound(item.pdv)}% PDV`
+          + ` | Uk. (bez PDVa): €${numberRound(item.totalWithoutPdv)}`
+          + ` | Ukupno s PDVom: €${numberRound(item.totalPlusPdv)}`;
       }
       orderText += `\n\nUrudžbeni broj: ${formData.urBroj}`;
       orderText += `\nKlasa: ${formData.documentClass}`;
@@ -573,9 +578,9 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
       orderText += `\nEvidencijski broj iz plana nabave: ${formData.evidentionNum}`;
       orderText += `\nPozicija iz proračuna: ${formData.pozicijaProracuna}`;
       orderText += `\nDatum izdavanja: ${formData.datumIzdavanja}`;
-      orderText += `\n\nUkupni iznos bez PDVa: €${formData.grandTotalWithoutPdv.toFixed(2)}`;
-      orderText += `\nUkupni PDV: €${formData.totalPdvAmount.toFixed(2)}`;
-      orderText += `\nUKUPNO ZA PLATITI: €${formData.grandTotalPlusPdv.toFixed(2)}`;
+      orderText += `\n\nUkupni iznos bez PDVa: €${numberRound(formData.grandTotalWithoutPdv)}`;
+      orderText += `\nUkupni PDV: €${numberRound(formData.totalPdvAmount)}`;
+      orderText += `\nUKUPNO ZA PLATITI: €${numberRound(formData.grandTotalPlusPdv)}`;
       orderText += `\n\nNarudžbu inicirao i odobrio: ${formData.odobrio}`;
 
       document.getElementById("output").textContent = orderText;
@@ -641,9 +646,9 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
                   '\nPozicija iz proračuna: ' + formData.pozicijaProracuna +
                   '\nDatum izdavanja: ' + formData.datumIzdavanja +
                   '\n\nBroj stavki: ' + formData.items.length +
-                  '\nUkupno bez PDVa: €' + formData.grandTotalWithoutPdv.toFixed(2) +
-                  '\nIznos PDVa: €' + formData.totalPdvAmount.toFixed(2) +
-                  '\nUKUPNA CIJENA: €' + formData.grandTotalPlusPdv.toFixed(2)
+                  '\nUkupno bez PDVa: €' + numberRound(formData.grandTotalWithoutPdv) +
+                  '\nIznos PDVa: €' + numberRound(formData.totalPdvAmount) +
+                  '\nUKUPNA CIJENA: €' + numberRound(formData.grandTotalPlusPdv)
           },
           { text: 'Stavke:', style: 'subheader' },
           {
@@ -662,11 +667,11 @@ Spremljeni dobavljači:\n${cachedSuppliers.join('\n')}
                 ...formData.items.map((item) => 
                   [
                     item.name,
-                    item.price.toFixed(2),
+                    numberRound(item.price),
                     item.quantity,
-                    item.pdv.toFixed(2),
-                    item.totalWithoutPdv.toFixed(2),
-                    item.totalPlusPdv.toFixed(2)
+                    numberRound(item.pdv),
+                    numberRound(item.totalWithoutPdv),
+                    numberRound(item.totalPlusPdv)
                   ]
                 )
               ]
